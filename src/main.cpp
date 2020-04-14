@@ -33,35 +33,10 @@ float maxSize = 0.8f;
 float minSize = 0.1f;
 
 // Vertex Shader
-std::string vShader = "                                                       \n\
-#version 450                                                                  \n\
-                                                                              \n\
-layout (location = 0) in vec3 pos;											  \n\
-                                                                              \n\
-out vec4 vCol;                  											  \n\
-                                                                              \n\
-uniform mat4 model;											                  \n\
-uniform mat4 projection;											          \n\
-                                                                              \n\
-void main()                                                                   \n\
-{                                                                             \n\
-    gl_Position = projection * model * vec4(pos, 1.0);				          \n\
-    vCol = vec4(clamp(pos, 0.0f, 1.0f), 1.0);			                      \n\
-}";
+std::string vShader = "Shaders/shader.vert";
 
 // Fragment Shader
-std::string fShader = "                                                       \n\
-#version 450                                                                  \n\
-                                                                              \n\
-in vec4 vCol;                                                                 \n\
-                                                                              \n\
-out vec4 colour;                                                              \n\
-                                                                              \n\
-void main()                                                                   \n\
-{                                                                             \n\
-    colour = vCol;                                                            \n\
-}";
-
+std::string fShader = "Shaders/shader.frag";
 
 void createObjects() {
     unsigned int indices[] = {
@@ -85,7 +60,7 @@ void createObjects() {
 
 void CreateShaders() {
     auto* shader1 = new Shader();
-    shader1->CreateFromString(vShader, fShader);
+    shader1->CreateFormFiles(vShader, fShader);
     shaderList.push_back(*shader1);
 }
 

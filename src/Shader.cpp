@@ -8,6 +8,34 @@ void Shader::CreateFromString(std::string &_vertexCode, std::string &_fragmentCo
     CompileShader(_vertexCode, _fragmentCode);
 }
 
+void Shader::CreateFormFiles(std::string &_vertexFilePath, std::string &_fragmentFilePath) {
+    std::string vertexString = ReadFile(_vertexFilePath);
+    std::string fragmentString = ReadFile(_fragmentFilePath);
+
+    CompileShader(vertexString, fragmentString);
+}
+
+std::string Shader::ReadFile(std::string &_filePath) {
+    std::string content;
+    std::fstream fileStream(_filePath, std::ios::in);
+
+    if ( !fileStream.is_open() ) {
+        std::cerr << "Fail to read " << _filePath << " file" << std::endl;
+        return "";
+    }
+
+    std::string line;
+
+    while ( !fileStream.eof() ) {
+        std::getline(fileStream, line);
+        content.append(line + "\n");
+    }
+
+    fileStream.close();
+
+    return content;
+}
+
 GLuint Shader::GetProjectionLocation() { return uniformProjection; }
 
 GLuint Shader::GetModelLocation() { return uniformModel; }
