@@ -12,6 +12,7 @@
 
 #include "Mesh.h"
 #include "Shader.h"
+#include "Window.h"
 
 // Window dimensions
 const GLint WIDTH = 800, HEIGHT = 600;
@@ -65,62 +66,17 @@ void CreateShaders() {
 }
 
 int main() {
-    // Initialise GLFW
-    if ( !glfwInit() ) {
-        std::cout << "GLFW initialisation failed!" << std::endl;
-        glfwTerminate();
-        return 1;
-    }
-
-    // Setup GLFW window properties
-    // OpenGL version
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-
-    // Core profile = No backwards compatibility
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    // Allow forward compatibility
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-
-    GLFWwindow* mainWindow = glfwCreateWindow(WIDTH, HEIGHT, "Test Window", nullptr, nullptr);
-
-    if ( !mainWindow ) {
-        std::cout << "GLFW Window creation failed" << std::endl;
-        glfwTerminate();
-        return 1;
-    }
-
-    // Get buffer size information
-    int bufferWidth, bufferHeight;
-    glfwGetFramebufferSize(mainWindow, &bufferWidth, &bufferHeight);
-
-    // Set context for GLEW to use
-    glfwMakeContextCurrent(mainWindow);
-
-    // Allow modern extension features
-    glewExperimental = GL_TRUE;
-
-    if ( glewInit() != GLEW_OK ) {
-        std::cout << "GLEW initialisation failed!" << std::endl;
-        glfwDestroyWindow(mainWindow);
-        glfwTerminate();
-        return 1;
-    }
-
-    glEnable(GL_DEPTH_TEST);
-
-    // Setup Viewport size
-    glViewport(0, 0, bufferWidth, bufferHeight);
+    Window window(WIDTH, HEIGHT);
+    window.Initialise();
 
     createObjects();
     CreateShaders();
 
     GLuint uniformModel = 0, uniformProjection = 0;
-    glm::mat4 projection = glm::perspective(45.0f, static_cast<GLfloat>(bufferWidth) / static_cast<GLfloat>(bufferHeight), 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(45.0f, static_cast<GLfloat>(window.GetBufferWidth()) / static_cast<GLfloat>(window.GetBufferHeight()), 0.1f, 100.0f);
 
     // Loop until window closed
-    while ( !glfwWindowShouldClose(mainWindow) ) {
+    while ( window.getShouldClose() ) {
         // Get + Handle user input
         glfwPollEvents();
 
@@ -166,7 +122,7 @@ int main() {
 
         glUseProgram(0);
 
-        glfwSwapBuffers(mainWindow);
+        window.SwapBuffers();
     }
 
     return 0;
