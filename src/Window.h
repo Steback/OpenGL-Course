@@ -11,9 +11,9 @@ class Window {
         Window();
         Window(GLint _windowWidth, GLint _windowHeight);
         ~Window();
-        int Initialise();
-        GLint GetBufferWidth();
-        GLint GetBufferHeight();
+        void Initialise();
+        GLfloat GetBufferWidth() const;
+        GLfloat GetBufferHeight() const;
         bool getShouldClose();
         void SwapBuffers();
 

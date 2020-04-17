@@ -9,12 +9,11 @@ Window::~Window() {
     glfwTerminate();
 }
 
-int Window::Initialise() {
+void Window::Initialise() {
     // Initialise GLFW
     if ( !glfwInit() ) {
         std::cout << "GLFW initialisation failed!" << std::endl;
         glfwTerminate();
-        return 1;
     }
 
     // Setup GLFW window properties
@@ -33,7 +32,6 @@ int Window::Initialise() {
     if ( !window ) {
         std::cout << "GLFW Window creation failed" << std::endl;
         glfwTerminate();
-        return 1;
     }
 
     // Get buffer size information
@@ -49,7 +47,6 @@ int Window::Initialise() {
         std::cout << "GLEW initialisation failed!" << std::endl;
         glfwDestroyWindow(window);
         glfwTerminate();
-        return 1;
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -58,9 +55,9 @@ int Window::Initialise() {
     glViewport(0, 0, bufferWidth, bufferHeight);
 }
 
-GLint Window::GetBufferWidth() { return bufferWidth; }
+GLfloat Window::GetBufferWidth() const { return bufferWidth; }
 
-GLint Window::GetBufferHeight() { return bufferHeight; }
+GLfloat Window::GetBufferHeight() const { return bufferHeight; }
 
 bool Window::getShouldClose() { return !glfwWindowShouldClose(window); }
 
