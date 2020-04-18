@@ -15,6 +15,9 @@ class Window {
         GLfloat GetBufferWidth() const;
         GLfloat GetBufferHeight() const;
         bool getShouldClose();
+        bool* getKeys();
+        GLfloat getXChange();
+        GLfloat getYChange();
         void SwapBuffers();
 
     private:

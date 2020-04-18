@@ -1,8 +1,8 @@
 #include "Window.h"
 
-Window::Window() : widht(800), height(600) {  }
+Window::Window() : widht(800), height(600), xChange(0.0f), yChange(0.0f) {  }
 
-Window::Window(GLint _windowWidth, GLint _windowHeight) : widht(_windowWidth), height(_windowHeight) {  }
+Window::Window(GLint _windowWidth, GLint _windowHeight) : widht(_windowWidth), height(_windowHeight), xChange(0.0f), yChange(0.0f) {  }
 
 Window::~Window() {
     glfwDestroyWindow(window);
@@ -39,6 +39,7 @@ void Window::Initialise() {
 
     // Hadle Key + Mouse input
     createCallBacks();
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Set context for GLEW to use
     glfwMakeContextCurrent(window);
@@ -65,6 +66,20 @@ GLfloat Window::GetBufferWidth() const { return bufferWidth; }
 GLfloat Window::GetBufferHeight() const { return bufferHeight; }
 
 bool Window::getShouldClose() { return !glfwWindowShouldClose(window); }
+
+bool* Window::getKeys() { return keys; }
+
+GLfloat Window::getXChange() {
+    GLfloat c = xChange;
+    xChange = 0.0f;
+    return c;
+}
+
+GLfloat Window::getYChange() {
+    GLfloat c = yChange;
+    yChange = 0.0f;
+    return c;
+}
 
 void Window::SwapBuffers() { glfwSwapBuffers(window); }
 
@@ -103,6 +118,4 @@ void Window::handleMouse(GLFWwindow *_window, double _xPos, double _yPos) {
 
     w->lastX = _xPos;
     w->lastY = _yPos;
-
-    printf("x: %.6f, y:%.6f\n", w->xChange, w->yChange);
 }

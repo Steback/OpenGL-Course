@@ -36,11 +36,13 @@ std::string Shader::ReadFile(std::string &_filePath) {
     return content;
 }
 
-GLuint Shader::GetProjectionLocation() { return uniformProjection; }
+GLuint Shader::GetProjectionLocation() const { return uniformProjection; }
 
-GLuint Shader::GetModelLocation() { return uniformModel; }
+GLuint Shader::GetModelLocation() const { return uniformModel; }
 
-void Shader::UseShader() {
+GLuint Shader::GetViewLocation() const { return uniformView; }
+
+void Shader::UseShader() const {
     glUseProgram(shaderID);
 }
 
@@ -84,6 +86,7 @@ void Shader::CompileShader(std::string &_vertexCode, std::string &_fragmentCode)
 
     uniformModel = glGetUniformLocation(shaderID, "model");
     uniformProjection = glGetUniformLocation(shaderID, "projection");
+    uniformView = glGetUniformLocation(shaderID, "view");
 }
 
 void Shader::AddShader(GLuint _program, std::string& _shaderCode, GLenum _shaderType) {

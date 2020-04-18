@@ -14,15 +14,17 @@ class Shader {
         void CreateFromString(std::string& _vertexCode, std::string& _fragmentCode);
         void CreateFormFiles(std::string& _vertexFilePath, std::string& _fragmentFilePath);
         static std::string ReadFile(std::string& _filePath);
-        GLuint GetProjectionLocation();
-        GLuint GetModelLocation();
-        void UseShader();
+        GLuint GetProjectionLocation() const;
+        GLuint GetModelLocation() const;
+        GLuint GetViewLocation() const;
+        void UseShader() const;
         void ClearShader();
 
     private:
         GLuint shaderID{};
         GLuint uniformProjection{};
         GLuint uniformModel{};
+        GLuint uniformView{};
         GLint result{};
         GLchar eLog[1024]{};
 
