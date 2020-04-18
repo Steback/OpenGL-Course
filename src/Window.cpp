@@ -37,6 +37,9 @@ void Window::Initialise() {
     // Get buffer size information
     glfwGetFramebufferSize(window, &bufferWidth, &bufferHeight);
 
+    // Hadle Key + Mouse input
+    createCallBacks();
+
     // Set context for GLEW to use
     glfwMakeContextCurrent(window);
 
@@ -53,6 +56,8 @@ void Window::Initialise() {
 
     // Setup Viewport size
     glViewport(0, 0, bufferWidth, bufferHeight);
+
+    glfwSetWindowUserPointer(window, this);
 }
 
 GLfloat Window::GetBufferWidth() const { return bufferWidth; }
@@ -62,3 +67,42 @@ GLfloat Window::GetBufferHeight() const { return bufferHeight; }
 bool Window::getShouldClose() { return !glfwWindowShouldClose(window); }
 
 void Window::SwapBuffers() { glfwSwapBuffers(window); }
+
+void Window::createCallBacks() {
+    glfwSetKeyCallback(window, handleKeys);
+    glfwSetCursorPosCallback(window, handleMouse);
+}
+
+void Window::handleKeys(GLFWwindow *_window, int _key, int _code, int _action, int _mode) {
+    auto* w = static_cast<Window*>(glfwGetWindowUserPointer(_window));
+
+    if ( _key == GLFW_KEY_ESCAPE && _action == GLFW_PRESS ) {
+        glfwSetWindowShouldClose(_window, GL_TRUE);
+    }
+
+    if ( _key >= 0 && _key < 1024 ) {
+        if ( _action == GLFW_PRESS ) {
+            w->keys[_key] = true;
+        } else if ( _action == GLFW_RELEASE ) {
+            w->keys[_key] = false;
+        }
+    }
+}
+
+void Window::handleMouse(GLFWwindow *_window, double _xPos, double _yPos) {
+    auto* w = static_cast<Window*>(glfwGetWindowUserPointer(_window));
+
+    if ( w->mouseFirstMoved ) {
+        w->lastX = _xPos;
+        w->lastY = _yPos;
+        w->mouseFirstMoved = false;
+    }
+
+    w->xChange = _xPos - w->lastX;
+    w->yChange = w->lastY - _yPos;
+
+    w->lastX = _xPos;
+    w->lastY = _yPos;
+
+    printf("x: %.6f, y:%.6f\n", w->xChange, w->yChange);
+}
