@@ -1,4 +1,3 @@
-
 #include "../lib/glm/gtc/matrix_transform.hpp"
 
 #include "Camera.h"
@@ -10,21 +9,36 @@ Camera::Camera(glm::vec3 _position, glm::vec3 _up, GLfloat _yaw, GLfloat _pitch,
 
 Camera::~Camera() = default;
 
-void Camera::KeyControl(const bool *_keys) {
+void Camera::KeyControl(const bool *_keys, GLfloat _deltaTime) {
+    GLfloat velocity = movementSpeed * _deltaTime;
+
     if ( _keys[GLFW_KEY_W] ) {
-        position += front * movementSpeed;
+        position += front * velocity;
     }
 
     if ( _keys[GLFW_KEY_S] ) {
-        position -= front * movementSpeed;
+        position -= front * velocity;
     }
 
-    if ( _keys[GLFW_KEY_D] ) {
-        position -= right * movementSpeed;
-    }
     if ( _keys[GLFW_KEY_A] ) {
-        position += right * movementSpeed;
+        position -= right * velocity;
     }
+    if ( _keys[GLFW_KEY_D] ) {
+        position += right * velocity;
+    }
+}
+
+void Camera::MouseControl(GLfloat _xChange, GLfloat _ychange) {
+    _xChange *= turnSpeed;
+    _ychange *= turnSpeed;
+
+    yaw += _xChange;
+    pitch += _ychange;
+
+    if ( pitch > 89.0f ) pitch = 89.0f;
+    if ( pitch < -89.0f ) pitch = -89.0f;
+
+    update();
 }
 
 glm::mat4 Camera::calculateViewMatrix() { return glm::lookAt(position, position + front, up); }
