@@ -1,5 +1,4 @@
 #include <iostream>
-#include <cmath>
 #include <vector>
 
 #include "../lib/glm/glm.hpp"
@@ -11,12 +10,17 @@
 #include "Window.h"
 #include "Camera.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "Texture.h"
+
 std::vector<Mesh*> meshList;
 std::vector<Shader> shaderList;
 
 auto* shader = new Shader();
 Mesh* mesh = new Mesh();
-Camera camera(glm::vec3(0.0f, 0.0f, -5.0f), glm::vec3(0.0f, 1.0f, 0.0f), 90.0f, 0.0f, 5.0f, 1.0f);
+Camera camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 5.0f, 0.5f);
+
+Texture brickTexture("assets/images/brick.png");
 
 GLfloat deltaTime = 0.0f;
 GLfloat lastTime = 0.0f;
@@ -36,13 +40,14 @@ void createObjects() {
     };
 
     GLfloat vertices[] {
-        -1.0f, -1.0f, 0.0f,
-        0.0f, -1.0f, 1.0f,
-        1.0f, -1.0f, 0.0f,
-        0.0f, 1.0f, 0.0f
+    //    X      Y     Z     U     V
+        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, -1.0f, 1.0f, 0.5f, 0.0f,
+        1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.5f, 1.0f
     };
 
-    mesh->CreateMesh(vertices, indices, 12, 12);
+    mesh->CreateMesh(vertices, indices, 20, 12);
     meshList.push_back(mesh);
 }
 
@@ -57,6 +62,8 @@ int main() {
 
     createObjects();
     CreateShaders();
+
+    brickTexture.LoadTexture();
 
     GLuint uniformModel = 0, uniformProjection = 0, unifornmView = 0;
     glm::mat4 projection = glm::perspective(45.0f, static_cast<GLfloat>(window.GetBufferWidth()) / static_cast<GLfloat>(window.GetBufferHeight()), 0.1f, 100.0f);
@@ -83,12 +90,12 @@ int main() {
         unifornmView = shaderList[0].GetViewLocation();
 
         glm::mat4 model(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, -2.5f));
-        model = glm::rotate(model, 160.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::translate(model, glm::vec3(0.0f, .0f, -2.5f));
         model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(unifornmView, 1, GL_FALSE, glm::value_ptr(camera.calculateViewMatrix()));
+        brickTexture.UserTexture();
         meshList[0]->RenderMesh();
 
         glUseProgram(0);
