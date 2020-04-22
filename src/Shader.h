@@ -17,6 +17,8 @@ class Shader {
         GLuint GetProjectionLocation() const;
         GLuint GetModelLocation() const;
         GLuint GetViewLocation() const;
+        GLuint GetAmbientIntensityLocation() const;
+        GLuint GetAmbientColourLocation() const;
         void UseShader() const;
         void ClearShader();
 
@@ -25,6 +27,8 @@ class Shader {
         GLuint uniformProjection{};
         GLuint uniformModel{};
         GLuint uniformView{};
+        GLuint uniformAmbientIntensity{};
+        GLuint uniformAmbientColour{};
         GLint result{};
         GLchar eLog[1024]{};
 

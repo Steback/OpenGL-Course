@@ -8,7 +8,7 @@ class Mesh {
         Mesh();
         ~Mesh();
         void CreateMesh(GLfloat* _vertices, unsigned int* _indices, unsigned int _numOfVertices, unsigned int _numOfIndices);
-        void RenderMesh();
+        void RenderMesh() const;
         void ClearMesh();
 
     private:
