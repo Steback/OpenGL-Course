@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include "Shader.h"
 
 Shader::Shader() = default;
@@ -45,6 +47,10 @@ GLuint Shader::GetViewLocation() const { return uniformView; }
 GLuint Shader::GetAmbientColourLocation() const { return uniformAmbientColour; }
 
 GLuint Shader::GetAmbientIntensityLocation() const { return uniformAmbientIntensity; }
+
+GLuint Shader::GetDiffuseIntensityLocation() const { return uniformDiffuseIntensity; }
+
+GLuint Shader::GetDirectionLocation() const { return uniformDirection; }
 
 void Shader::UseShader() const {
     glUseProgram(shaderID);
@@ -109,6 +115,8 @@ void Shader::CompileShader(std::string &_vertexCode, std::string &_fragmentCode)
     uniformView = glGetUniformLocation(shaderID, "view");
     uniformAmbientColour = glGetUniformLocation(shaderID, "directionalLight.colour");
     uniformAmbientIntensity = glGetUniformLocation(shaderID, "directionalLight.ambientIntensity");
+    uniformDirection = glGetUniformLocation(shaderID, "directionalLight.direction");
+    uniformDiffuseIntensity = glGetUniformLocation(shaderID, "directionalLight.diffuseIntensity");
 }
 
 void Shader::AddShader(GLuint _program, std::string& _shaderCode, GLenum _shaderType) {

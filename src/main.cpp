@@ -23,7 +23,7 @@ Camera camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 
 
 Texture brickTexture("assets/images/brick.png");
 
-Light ligh(0.0f, 0.0f, 1.0f, 0.5f);
+Light ligh(1.0f, 1.0f, 1.0f, 0.2f, 2.0f, -1.0f, -2.0f, 1.0f);
 
 GLfloat deltaTime = 0.0f;
 GLfloat lastTime = 0.0f;
@@ -34,6 +34,44 @@ std::string vShader = "Shaders/shader.vert";
 // Fragment Shader
 std::string fShader = "Shaders/shader.frag";
 
+void calcAverageNormals(const unsigned int* _indices, unsigned int _indicesCount, GLfloat* _vertices,
+        unsigned int _verticesCount, unsigned int _vLenght, unsigned int _normalOffset) {
+    for ( unsigned int i = 0; i < _indicesCount; i += 3 ) {
+        unsigned int in0 = _indices[i] * _vLenght;
+        unsigned int in1 = _indices[i + 1] * _vLenght;
+        unsigned int in2 = _indices[i + 2] * _vLenght;
+
+        glm::vec3 v1(_vertices[in1] - _vertices[in0], _vertices[in1 + 1] - _vertices[in0 + 1], _vertices[in1+ 2] - _vertices[in0+ 2]);
+        glm::vec3 v2(_vertices[in2] - _vertices[in0], _vertices[in2 + 1] - _vertices[in0 + 1], _vertices[in2+ 2] - _vertices[in0+ 2]);
+        glm::vec3 normal = glm::normalize(glm::cross(v1, v2));
+
+        in0 += _normalOffset;
+        in1 += _normalOffset;
+        in2 += _normalOffset;
+
+        _vertices[in0] += normal.x;
+        _vertices[in0 + 1] += normal.y;
+        _vertices[in0 + 2] += normal.z;
+
+        _vertices[in1] += normal.x;
+        _vertices[in1 + 1] += normal.y;
+        _vertices[in1 + 2] += normal.z;
+
+        _vertices[in2] += normal.x;
+        _vertices[in2 + 1] += normal.y;
+        _vertices[in2 + 2] += normal.z;
+    }
+
+    for ( unsigned int i = 0; i < _verticesCount / _vLenght; i++ ) {
+        unsigned int nOffset = i * _vLenght + _normalOffset;
+        glm::vec3 vec = glm::normalize(glm::vec3(_vertices[nOffset], _vertices[nOffset + 1], _vertices[nOffset + 2]));
+
+        _vertices[nOffset] = vec.x;
+        _vertices[nOffset + 1] = vec.y;
+        _vertices[nOffset + 2] = vec.z;
+    }
+}
+
 void createObjects() {
     unsigned int indices[] = {
         0, 3, 1,
@@ -43,14 +81,16 @@ void createObjects() {
     };
 
     GLfloat vertices[] {
-    //    X      Y     Z     U     V
-        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, -1.0f, 1.0f, 0.5f, 0.0f,
-        1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.5f, 1.0f
+    //    X      Y     Z     U     V     NX    NY    NZ
+        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, -1.0f, 1.0f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f,
+        1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f
     };
 
-    mesh->CreateMesh(vertices, indices, 20, 12);
+    calcAverageNormals(indices, 12, vertices, 32, 8, 5);
+
+    mesh->CreateMesh(vertices, indices, 32, 12);
     meshList.push_back(mesh);
 }
 
@@ -68,7 +108,9 @@ int main() {
 
     brickTexture.LoadTexture();
 
-    GLuint uniformModel = 0, uniformProjection = 0, unifornmView = 0, uniformAmbientIntensity = 0, uniformAmbientColour = 0;
+    GLuint uniformModel = 0, uniformProjection = 0, unifornmView = 0;
+    GLuint uniformAmbientIntensity = 0, uniformAmbientColour = 0;
+    GLuint uniformDirection = 0, uniformDiffuseIntensity = 0;
     glm::mat4 projection = glm::perspective(45.0f, static_cast<GLfloat>(window.GetBufferWidth()) / static_cast<GLfloat>(window.GetBufferHeight()), 0.1f, 100.0f);
 
     // Loop until window closed
@@ -99,8 +141,10 @@ int main() {
         unifornmView = shaderList[0].GetViewLocation();
         uniformAmbientIntensity = shaderList[0].GetAmbientIntensityLocation();
         uniformAmbientColour = shaderList[0].GetAmbientColourLocation();
+        uniformDirection = shaderList[0].GetDirectionLocation();
+        uniformDiffuseIntensity = shaderList[0].GetDiffuseIntensityLocation();
 
-        ligh.useLisht(uniformAmbientIntensity, uniformAmbientColour);
+        ligh.useLisht(uniformAmbientIntensity, uniformAmbientColour, uniformDiffuseIntensity, uniformDirection);
 
         glm::mat4 model(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, .0f, -2.5f));
