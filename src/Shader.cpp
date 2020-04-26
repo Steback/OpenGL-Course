@@ -10,14 +10,14 @@ void Shader::CreateFromString(std::string &_vertexCode, std::string &_fragmentCo
     CompileShader(_vertexCode, _fragmentCode);
 }
 
-void Shader::CreateFormFiles(std::string &_vertexFilePath, std::string &_fragmentFilePath) {
+void Shader::CreateFormFiles(const std::string &_vertexFilePath, const std::string &_fragmentFilePath) {
     std::string vertexString = ReadFile(_vertexFilePath);
     std::string fragmentString = ReadFile(_fragmentFilePath);
 
     CompileShader(vertexString, fragmentString);
 }
 
-std::string Shader::ReadFile(std::string &_filePath) {
+std::string Shader::ReadFile(const std::string &_filePath) {
     std::string content;
     std::fstream fileStream(_filePath, std::ios::in);
 
@@ -37,6 +37,8 @@ std::string Shader::ReadFile(std::string &_filePath) {
 
     return content;
 }
+
+GLuint Shader::GetUniformLocation(const std::string &_name) const { return glGetUniformLocation(shaderID, _name.c_str()); }
 
 GLuint Shader::GetProjectionLocation() const { return uniformProjection; }
 

@@ -11,8 +11,9 @@ class Shader {
         Shader();
         ~Shader();
         void CreateFromString(std::string& _vertexCode, std::string& _fragmentCode);
-        void CreateFormFiles(std::string& _vertexFilePath, std::string& _fragmentFilePath);
-        static std::string ReadFile(std::string& _filePath);
+        void CreateFormFiles(const std::string& _vertexFilePath, const std::string& _fragmentFilePath);
+        static std::string ReadFile(const std::string& _filePath);
+        GLuint GetUniformLocation(const std::string& _name) const;
         GLuint GetProjectionLocation() const;
         GLuint GetModelLocation() const;
         GLuint GetViewLocation() const;
