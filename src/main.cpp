@@ -9,7 +9,7 @@
 #include "Shader.h"
 #include "Window.h"
 #include "Camera.h"
-#include "Light.h"
+#include "DirectionalLight.h"
 #include "Material.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -24,7 +24,7 @@ Camera camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 
 
 Texture brickTexture("assets/images/brick.png");
 
-Light ligh(1.0f, 1.0f, 1.0f, 0.2f, 2.0f, -1.0f, -2.0f, 1.0f);
+DirectionalLight directionalLight(1.0f, 1.0f, 1.0f, 0.5f, 0.5f, 0.0f, 0.0f, -1.0f);
 
 Material shinyMaterial(1.0f, 32);
 Material dullMaterial(0.3f, 4);
@@ -146,14 +146,14 @@ int main() {
         uniformSpecularIntesity = shaderList[0].GetUniformLocation("mateial.specularIntesnity");
         uniformShininess = shaderList[0].GetUniformLocation("mateial.shininess");
 
-        ligh.useLisht(uniformAmbientIntensity, uniformAmbientColour, uniformDiffuseIntensity, uniformDirection);
+        directionalLight.useLisht(uniformAmbientIntensity, uniformAmbientColour, uniformDiffuseIntensity, uniformDirection);
 
         glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(unifornmView, 1, GL_FALSE, glm::value_ptr(camera.calculateViewMatrix()));
         glUniform3f(uniformEyePosition, camera.getCameraPosition().x, camera.getCameraPosition().y, camera.getCameraPosition().z);
 
         glm::mat4 model(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 4.0f, -2.5f));
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, -2.5f));
 //        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
 
         // glUniform — Specify the value of a uniform variable for the current program object

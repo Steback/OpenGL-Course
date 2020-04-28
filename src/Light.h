@@ -7,16 +7,12 @@
 
 class Light {
     public:
-        explicit Light(GLfloat _red, GLfloat _green, GLfloat _blue, GLfloat _ambientIntensity,
-                GLfloat _xDir, GLfloat _yDir, GLfloat _zDir, GLfloat _dIntensity);
+        explicit Light(GLfloat _red, GLfloat _green, GLfloat _blue, GLfloat _ambientIntensity, GLfloat _dIntensity);
         ~Light();
-        void useLisht(GLfloat _ambientIntensityLocation, GLfloat _ambienColourLocation,
-                GLfloat _diffuseIntensityLocation, GLfloat _directionLocation) const;
 
-    private:
+    protected:
         glm::vec3 colour;
         GLfloat ambientIntensity;
-        glm::vec3 direction;
         GLfloat diffuseIntensity;
 };
 
