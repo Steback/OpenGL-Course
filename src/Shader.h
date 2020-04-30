@@ -9,6 +9,14 @@
 #include "DirectionalLight.h"
 #include "PointLight.h"
 
+struct UniformDirectionalLight {
+    GLuint uniformColour;
+    GLuint uniformAmbientIntensity;
+    GLuint uniformDiffuseIntensity;
+
+    GLuint uniformDirection;
+};
+
 class Shader {
     public:
         Shader();
@@ -20,10 +28,7 @@ class Shader {
         GLuint GetProjectionLocation() const;
         GLuint GetModelLocation() const;
         GLuint GetViewLocation() const;
-        GLuint GetAmbientIntensityLocation() const;
-        GLuint GetAmbientColourLocation() const;
-        GLuint GetDiffuseIntensityLocation() const;
-        GLuint GetDirectionLocation() const;
+        void SetDirectionalLight(DirectionalLight* _dLight, UniformDirectionalLight* _uniformDLight);
         void UseShader() const;
         void ClearShader();
 
@@ -33,10 +38,6 @@ class Shader {
         GLuint uniformProjection{};
         GLuint uniformModel{};
         GLuint uniformView{};
-        GLuint uniformAmbientIntensity{};
-        GLuint uniformAmbientColour{};
-        GLuint uniformDiffuseIntensity{};
-        GLuint uniformDirection{};
         GLint result{};
         GLchar eLog[1024]{};
 

@@ -107,10 +107,10 @@ int main() {
     brickTexture.LoadTexture();
 
     GLuint uniformModel = 0, uniformProjection = 0, unifornmView = 0, uniformEyePosition = 0;
-    GLuint uniformAmbientIntensity = 0, uniformAmbientColour = 0;
-    GLuint uniformDirection = 0, uniformDiffuseIntensity = 0;
     GLuint uniformSpecularIntesity = 0, uniformShininess = 0;
     glm::mat4 projection = glm::perspective(45.0f, static_cast<GLfloat>(window.GetBufferWidth()) / static_cast<GLfloat>(window.GetBufferHeight()), 0.1f, 100.0f);
+
+    UniformDirectionalLight uniformDirectionalLight{};
 
     // Loop until window closed
     while ( window.getShouldClose() ) {
@@ -138,22 +138,25 @@ int main() {
         uniformModel = shaderList[0].GetModelLocation();
         uniformProjection = shaderList[0].GetProjectionLocation();
         unifornmView = shaderList[0].GetViewLocation();
-        uniformAmbientIntensity = shaderList[0].GetAmbientIntensityLocation();
-        uniformAmbientColour = shaderList[0].GetAmbientColourLocation();
-        uniformDirection = shaderList[0].GetDirectionLocation();
-        uniformDiffuseIntensity = shaderList[0].GetDiffuseIntensityLocation();
+        uniformDirectionalLight.uniformColour = shaderList[0].GetUniformLocation("directionalLight.colour");
+        uniformDirectionalLight.uniformAmbientIntensity = shaderList[0].GetUniformLocation("directionalLight.ambientIntensity");
+        uniformDirectionalLight.uniformDirection = shaderList[0].GetUniformLocation("directionalLight.direction");
+        uniformDirectionalLight.uniformDiffuseIntensity = shaderList[0].GetUniformLocation("directionalLight.diffuseIntensity");
         uniformEyePosition = shaderList[0].GetUniformLocation("eyePosition");
         uniformSpecularIntesity = shaderList[0].GetUniformLocation("mateial.specularIntesnity");
         uniformShininess = shaderList[0].GetUniformLocation("mateial.shininess");
 
-        directionalLight.useLisht(uniformAmbientIntensity, uniformAmbientColour, uniformDiffuseIntensity, uniformDirection);
+        shaderList[0].SetDirectionalLight(&directionalLight, &uniformDirectionalLight);
+
+//        directionalLight.useLight(uniformDirectionalLight.uniformAmbientIntensity,  uniformDirectionalLight.uniformColour,
+//                uniformDirectionalLight.uniformDiffuseIntensity, uniformDirectionalLight.uniformDirection);
 
         glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(unifornmView, 1, GL_FALSE, glm::value_ptr(camera.calculateViewMatrix()));
         glUniform3f(uniformEyePosition, camera.getCameraPosition().x, camera.getCameraPosition().y, camera.getCameraPosition().z);
 
         glm::mat4 model(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, -2.5f));
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
 //        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
 
         // glUniform — Specify the value of a uniform variable for the current program object

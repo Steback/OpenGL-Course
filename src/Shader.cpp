@@ -38,7 +38,9 @@ std::string Shader::ReadFile(const std::string &_filePath) {
     return content;
 }
 
-GLuint Shader::GetUniformLocation(const std::string &_name) const { return glGetUniformLocation(shaderID, _name.c_str()); }
+GLuint Shader::GetUniformLocation(const std::string &_name) const {
+    return glGetUniformLocation(shaderID, _name.c_str());
+}
 
 GLuint Shader::GetProjectionLocation() const { return uniformProjection; }
 
@@ -46,15 +48,13 @@ GLuint Shader::GetModelLocation() const { return uniformModel; }
 
 GLuint Shader::GetViewLocation() const { return uniformView; }
 
-GLuint Shader::GetAmbientColourLocation() const { return uniformAmbientColour; }
-
-GLuint Shader::GetAmbientIntensityLocation() const { return uniformAmbientIntensity; }
-
-GLuint Shader::GetDiffuseIntensityLocation() const { return uniformDiffuseIntensity; }
-
-GLuint Shader::GetDirectionLocation() const { return uniformDirection; }
+void Shader::SetDirectionalLight(DirectionalLight *_dLight, UniformDirectionalLight *_uniformDLight) {
+    _dLight->useLight(_uniformDLight->uniformAmbientIntensity,  _uniformDLight->uniformColour,
+                      _uniformDLight->uniformDiffuseIntensity, _uniformDLight->uniformDirection);
+}
 
 void Shader::UseShader() const {
+    // glGetUniformLocation returns an integer that represents the location of a specific uniform variable within a program object.
     glUseProgram(shaderID);
 }
 
@@ -115,10 +115,6 @@ void Shader::CompileShader(std::string &_vertexCode, std::string &_fragmentCode)
     uniformModel = glGetUniformLocation(shaderID, "model");
     uniformProjection = glGetUniformLocation(shaderID, "projection");
     uniformView = glGetUniformLocation(shaderID, "view");
-    uniformAmbientColour = glGetUniformLocation(shaderID, "directionalLight.colour");
-    uniformAmbientIntensity = glGetUniformLocation(shaderID, "directionalLight.ambientIntensity");
-    uniformDirection = glGetUniformLocation(shaderID, "directionalLight.direction");
-    uniformDiffuseIntensity = glGetUniformLocation(shaderID, "directionalLight.diffuseIntensity");
 }
 
 void Shader::AddShader(GLuint _program, std::string& _shaderCode, GLenum _shaderType) {
