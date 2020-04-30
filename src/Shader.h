@@ -6,6 +6,9 @@
 
 #include <GL/glew.h>
 
+#include "DirectionalLight.h"
+#include "PointLight.h"
+
 class Shader {
     public:
         Shader();
@@ -25,6 +28,7 @@ class Shader {
         void ClearShader();
 
     private:
+        int pointLight{};
         GLuint shaderID{};
         GLuint uniformProjection{};
         GLuint uniformModel{};
