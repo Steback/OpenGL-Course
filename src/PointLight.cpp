@@ -5,7 +5,7 @@ PointLight::PointLight(GLfloat _red, GLfloat _green, GLfloat _blue, GLfloat _amb
 
 PointLight::~PointLight() = default;
 
-void PointLight::useLisht(GLfloat _ambientIntensityLocation, GLfloat _ambienColourLocation, GLfloat _diffuseIntensityLocation,
+void PointLight::useLight(GLfloat _ambientIntensityLocation, GLfloat _ambienColourLocation, GLfloat _diffuseIntensityLocation,
         GLfloat _positionLocation, GLfloat _constantLocation, GLfloat _linearLocation, GLfloat _exponentLocation) const {
     // glUniform — Specify the value of a uniform variable for the current program object
     glUniform3f(_ambienColourLocation, colour.x, colour.y, colour.z);

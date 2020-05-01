@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include <vector>
 
 #include <GL/glew.h>
 
@@ -17,6 +18,17 @@ struct UniformDirectionalLight {
     GLuint uniformDirection;
 };
 
+struct UniformPointLight {
+    GLuint uniformColour;
+    GLuint uniformAmbientIntensity;
+    GLuint uniformDiffuseIntensity;
+
+    GLuint uniformPosition;
+    GLuint uniformConstant;
+    GLuint uniformLinear;
+    GLuint uniformExponent;
+};
+
 class Shader {
     public:
         Shader();
@@ -29,6 +41,7 @@ class Shader {
         GLuint GetModelLocation() const;
         GLuint GetViewLocation() const;
         void SetDirectionalLight(DirectionalLight* _dLight, UniformDirectionalLight* _uniformDLight);
+        void SetPointLights(const std::vector<PointLight>& pLight, const std::vector<UniformPointLight>& _uniformPLight, unsigned int lightCount) const;
         void UseShader() const;
         void ClearShader();
 

@@ -1,6 +1,7 @@
 #include <fstream>
 
 #include "Shader.h"
+#include "Constans.h"
 
 Shader::Shader() = default;
 
@@ -51,6 +52,20 @@ GLuint Shader::GetViewLocation() const { return uniformView; }
 void Shader::SetDirectionalLight(DirectionalLight *_dLight, UniformDirectionalLight *_uniformDLight) {
     _dLight->useLight(_uniformDLight->uniformAmbientIntensity,  _uniformDLight->uniformColour,
                       _uniformDLight->uniformDiffuseIntensity, _uniformDLight->uniformDirection);
+}
+
+void Shader::SetPointLights(const std::vector<PointLight>& pLight, const std::vector<UniformPointLight>& _uniformPLight, unsigned int lightCount) const {
+    if ( lightCount > MAX_POINT_LIGHTS ) lightCount = MAX_POINT_LIGHTS;
+
+    GLuint uniformPointLightCount = glGetUniformLocation(shaderID, "pointLightCount");
+
+    glUniform1i(uniformPointLightCount, lightCount);
+
+    for ( size_t i = 0; i < lightCount; i++ ) {
+        pLight[i].useLight(_uniformPLight[i].uniformAmbientIntensity, _uniformPLight[i].uniformColour,
+                           _uniformPLight[i].uniformDiffuseIntensity, _uniformPLight[i].uniformPosition,
+                           _uniformPLight[i].uniformConstant, _uniformPLight[i].uniformLinear, _uniformPLight[i].uniformExponent);
+    }
 }
 
 void Shader::UseShader() const {
@@ -120,7 +135,7 @@ void Shader::CompileShader(std::string &_vertexCode, std::string &_fragmentCode)
 void Shader::AddShader(GLuint _program, std::string& _shaderCode, GLenum _shaderType) {
     // glCreateShader creates an empty shader object and returns a non-zero value by which it can be referenced.
     // A shader object is used to maintain the source code strings that define a shader. shaderType indicates the type of shader to be created.
-    GLuint newShader = glCreateShader(_shaderType);
+    GLuint shader = glCreateShader(_shaderType);
 
     const GLchar* shaderCode[1];
     shaderCode[0] = _shaderCode.c_str();
@@ -129,21 +144,21 @@ void Shader::AddShader(GLuint _program, std::string& _shaderCode, GLenum _shader
     codeLenght[0] = _shaderCode.length();
 
     // glShaderSource sets the source code in shader to the source code in the array of strings specified by string.
-    glShaderSource(newShader, 1, shaderCode, codeLenght);
+    glShaderSource(shader, 1, shaderCode, codeLenght);
 
     // glCompileShader compiles the source code strings that have been stored in the shader object specified by shader.
-    glCompileShader(newShader);
+    glCompileShader(shader);
 
     // glGetShaderiv — return a parameter from a shader object
-    glGetShaderiv(newShader, GL_COMPILE_STATUS, &result);
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
 
     if ( !result ) {
         // glGetShaderInfoLog — Returns the information log for a shader object
-        glGetShaderInfoLog(shaderID, sizeof(eLog), nullptr, eLog);
+        glGetShaderInfoLog(shader, sizeof(eLog), nullptr, eLog);
         std::cerr << "Error compiling " << _shaderType << " shader: " <<  eLog << std::endl;
         return ;
     }
 
     // glAttachShader — Attaches a shader object to a program object
-    glAttachShader(_program, newShader);
+    glAttachShader(_program, shader);
 }
