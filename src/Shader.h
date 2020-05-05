@@ -7,9 +7,6 @@
 
 #include <GL/glew.h>
 
-#include "DirectionalLight.h"
-#include "PointLight.h"
-
 struct UniformDirectionalLight {
     GLuint uniformColour;
     GLuint uniformAmbientIntensity;
@@ -40,13 +37,10 @@ class Shader {
         GLuint GetProjectionLocation() const;
         GLuint GetModelLocation() const;
         GLuint GetViewLocation() const;
-        void SetDirectionalLight(DirectionalLight* _dLight, UniformDirectionalLight* _uniformDLight);
-        void SetPointLights(const std::vector<PointLight>& pLight, const std::vector<UniformPointLight>& _uniformPLight, unsigned int lightCount) const;
         void UseShader() const;
         void ClearShader();
 
     private:
-        int pointLight{};
         GLuint shaderID{};
         GLuint uniformProjection{};
         GLuint uniformModel{};

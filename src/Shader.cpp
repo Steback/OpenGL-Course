@@ -49,25 +49,6 @@ GLuint Shader::GetModelLocation() const { return uniformModel; }
 
 GLuint Shader::GetViewLocation() const { return uniformView; }
 
-void Shader::SetDirectionalLight(DirectionalLight *_dLight, UniformDirectionalLight *_uniformDLight) {
-    _dLight->useLight(_uniformDLight->uniformAmbientIntensity,  _uniformDLight->uniformColour,
-                      _uniformDLight->uniformDiffuseIntensity, _uniformDLight->uniformDirection);
-}
-
-void Shader::SetPointLights(const std::vector<PointLight>& pLight, const std::vector<UniformPointLight>& _uniformPLight, unsigned int lightCount) const {
-    if ( lightCount > MAX_POINT_LIGHTS ) lightCount = MAX_POINT_LIGHTS;
-
-    GLuint uniformPointLightCount = glGetUniformLocation(shaderID, "pointLightCount");
-
-    glUniform1i(uniformPointLightCount, lightCount);
-
-    for ( size_t i = 0; i < lightCount; i++ ) {
-        pLight[i].useLight(_uniformPLight[i].uniformAmbientIntensity, _uniformPLight[i].uniformColour,
-                           _uniformPLight[i].uniformDiffuseIntensity, _uniformPLight[i].uniformPosition,
-                           _uniformPLight[i].uniformConstant, _uniformPLight[i].uniformLinear, _uniformPLight[i].uniformExponent);
-    }
-}
-
 void Shader::UseShader() const {
     // glGetUniformLocation returns an integer that represents the location of a specific uniform variable within a program object.
     glUseProgram(shaderID);

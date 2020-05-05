@@ -6,21 +6,19 @@
 #include "../lib/glm/gtc/type_ptr.hpp"
 
 #include "Mesh.h"
-#include "Shader.h"
 #include "Window.h"
 #include "Camera.h"
 #include "DirectionalLight.h"
 #include "Material.h"
 #include "Constans.h"
+#include "PointLight.h"
+#include "SpotLight.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "Texture.h"
 
 std::vector<Mesh*> meshList;
-std::vector<Shader> shaderList;
-
-auto* shader = new Shader();
-Mesh* mesh = new Mesh();
+std::vector<Shader*> shaderList;
 
 GLfloat deltaTime = 0.0f;
 GLfloat lastTime = 0.0f;
@@ -79,15 +77,33 @@ void createObjects() {
         0.0f, 1.0f, 0.0f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f
     };
 
+    unsigned int floorIndices[] = {
+            0, 2, 1,
+            1, 2, 3
+    };
+
+    GLfloat floorVertices[] = {
+            -10.0f, 0.0f, -10.0f,	0.0f, 0.0f,		0.0f, -1.0f, 0.0f,
+            10.0f, 0.0f, -10.0f,	10.0f, 0.0f,	0.0f, -1.0f, 0.0f,
+            -10.0f, 0.0f, 10.0f,	0.0f, 10.0f,	0.0f, -1.0f, 0.0f,
+            10.0f, 0.0f, 10.0f,		10.0f, 10.0f,	0.0f, -1.0f, 0.0f
+    };
+
     calcAverageNormals(indices, 12, vertices, 32, 8, 5);
 
+    Mesh* mesh = new Mesh();
     mesh->CreateMesh(vertices, indices, 32, 12);
     meshList.push_back(mesh);
+
+    Mesh* mesh2 = new Mesh();
+    mesh2->CreateMesh(floorVertices, floorIndices, 32, 6);
+    meshList.push_back(mesh2);
 }
 
 void CreateShaders() {
+    auto shader = new Shader();
     shader->CreateFormFiles( "Shaders/shader.vert", "Shaders/shader.frag");
-    shaderList.push_back(*shader);
+    shaderList.push_back(shader);
 }
 
 int main() {
@@ -98,52 +114,69 @@ int main() {
     CreateShaders();
 
     Camera camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 5.0f, 0.5f);
+
     Texture brickTexture("assets/images/brick.png");
-    Material shinyMaterial(1.0f, 32);
-
-    unsigned int pointLightCount = 0;
-
-    DirectionalLight directionalLight(1.0f, 1.0f, 1.0f, 0.2f, 0.2f, 0.0f, 0.0f, -1.0f);
-    std::vector<PointLight> pointLights {
-            { 0.0f, 0.0f, 1.0f, 0.1f, 1.0f, -4.0f, 0.0f, 0.0f, 0.3f, 0.2f, 0.1f }
-    };
-
-    pointLightCount++;
-
     brickTexture.LoadTexture();
 
+    Texture plainTexture("assets/images/plain.png");
+    plainTexture.LoadTexture();
+
+    Material shinyMaterial(4.0f, 256);
+
+    unsigned int pointLightCount = 0, spotLightCount = 0;
+
+    DirectionalLight directionalLight(1.0f, 1.0f, 1.0f, 0.1f, 0.1f, 0.0f, 0.0f, -1.0f);
+
+    std::vector<PointLight> pointLights {
+            { 0.0f, 0.0f, 1.0f, 0.0f, 0.1f, 0.0f, 0.0f, 0.0f, 0.3f, 0.2f, 0.1f },
+            { 0.0f, 1.0f, 0.0f, 0.0f, 0.1f, -4.0f, 2.0f, 0.0f, 0.3f, 0.1f, 0.1f }
+    };
+
+    pointLightCount = pointLights.size();
+
+
+    std::vector<SpotLight> spotLights {
+            { 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+              0.0f, 1.0f, 0.0f, 0.3f, 0.2f, 0.1f, 20.0f },
+    };
+
+    spotLightCount = spotLights.size();
+
     GLuint uniformModel = 0, uniformProjection = 0, unifornmView = 0, uniformEyePosition = 0;
-    GLuint uniformSpecularIntesity = 0, uniformShininess = 0;
+    GLuint uniformSpecularIntesity = 0, uniformShininess = 0, uniformPointLightCount = 0, uniformSpotLightCount;
 
     glm::mat4 projection = glm::perspective(45.0f, static_cast<GLfloat>(window.GetBufferWidth()) / static_cast<GLfloat>(window.GetBufferHeight()), 0.1f, 100.0f);
 
     UniformDirectionalLight uniformDirectionalLight{};
     std::vector<UniformPointLight> uniformPointLight(MAX_POINT_LIGHTS);
+    std::vector<UniformSpotLight> uniformSpotLight(MAX_SPOT_LIGHTS);
 
     for (size_t i = 0; i < MAX_POINT_LIGHTS; i++) {
         char locBuff[100] = { '\0' };
 
         snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].base.colour", i);
-        uniformPointLight[i].uniformColour = shaderList[0].GetUniformLocation(locBuff);
+        uniformPointLight[i].uniformColour = shaderList[0]->GetUniformLocation(locBuff);
 
         snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].base.ambientIntensity", i);
-        uniformPointLight[i].uniformAmbientIntensity = shaderList[0].GetUniformLocation(locBuff);
+        uniformPointLight[i].uniformAmbientIntensity = shaderList[0]->GetUniformLocation(locBuff);
 
         snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].base.diffuseIntensity", i);
-        uniformPointLight[i].uniformDiffuseIntensity = shaderList[0].GetUniformLocation(locBuff);
+        uniformPointLight[i].uniformDiffuseIntensity = shaderList[0]->GetUniformLocation(locBuff);
 
         snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].position", i);
-        uniformPointLight[i].uniformPosition = shaderList[0].GetUniformLocation(locBuff);
+        uniformPointLight[i].uniformPosition = shaderList[0]->GetUniformLocation(locBuff);
 
         snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].constant", i);
-        uniformPointLight[i].uniformConstant = shaderList[0].GetUniformLocation(locBuff);
+        uniformPointLight[i].uniformConstant = shaderList[0]->GetUniformLocation(locBuff);
 
         snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].linear", i);
-        uniformPointLight[i].uniformLinear = shaderList[0].GetUniformLocation(locBuff);
+        uniformPointLight[i].uniformLinear = shaderList[0]->GetUniformLocation(locBuff);
 
         snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].exponent", i);
-        uniformPointLight[i].uniformExponent = shaderList[0].GetUniformLocation(locBuff);
+        uniformPointLight[i].uniformExponent = shaderList[0]->GetUniformLocation(locBuff);
     }
+
+    SpotLight::getUniformLocation(shaderList[0], uniformSpotLight);
 
     // Loop until window closed
     while ( window.getShouldClose() ) {
@@ -167,35 +200,53 @@ int main() {
         // GL_DEPTH_BUFFER_BIT - Indicates the depth buffer.
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        shaderList[0].UseShader();
-        uniformModel = shaderList[0].GetModelLocation();
-        uniformProjection = shaderList[0].GetProjectionLocation();
-        unifornmView = shaderList[0].GetViewLocation();
-        uniformDirectionalLight.uniformColour = shaderList[0].GetUniformLocation("directionalLight.base.colour");
-        uniformDirectionalLight.uniformAmbientIntensity = shaderList[0].GetUniformLocation("directionalLight.base.ambientIntensity");
-        uniformDirectionalLight.uniformDirection = shaderList[0].GetUniformLocation("directionalLight.direction");
-        uniformDirectionalLight.uniformDiffuseIntensity = shaderList[0].GetUniformLocation("directionalLight.base.diffuseIntensity");
-        uniformEyePosition = shaderList[0].GetUniformLocation("eyePosition");
-        uniformSpecularIntesity = shaderList[0].GetUniformLocation("mateial.specularIntensity");
-        uniformShininess = shaderList[0].GetUniformLocation("mateial.shininess");
+        shaderList[0]->UseShader();
+        uniformModel = shaderList[0]->GetModelLocation();
+        uniformProjection = shaderList[0]->GetProjectionLocation();
+        unifornmView = shaderList[0]->GetViewLocation();
+        uniformDirectionalLight.uniformColour = shaderList[0]->GetUniformLocation("directionalLight.base.colour");
+        uniformDirectionalLight.uniformAmbientIntensity = shaderList[0]->GetUniformLocation("directionalLight.base.ambientIntensity");
+        uniformDirectionalLight.uniformDirection = shaderList[0]->GetUniformLocation("directionalLight.direction");
+        uniformDirectionalLight.uniformDiffuseIntensity = shaderList[0]->GetUniformLocation("directionalLight.base.diffuseIntensity");
+        uniformEyePosition = shaderList[0]->GetUniformLocation("eyePosition");
+        uniformSpecularIntesity = shaderList[0]->GetUniformLocation("mateial.specularIntensity");
+        uniformShininess = shaderList[0]->GetUniformLocation("mateial.shininess");
+        uniformPointLightCount = shaderList[0]->GetUniformLocation("pointLightCount");
 
-        shaderList[0].SetDirectionalLight(&directionalLight, &uniformDirectionalLight);
-        shaderList[0].SetPointLights(pointLights, uniformPointLight, pointLightCount);
+        directionalLight.useLight(uniformDirectionalLight.uniformAmbientIntensity,  uniformDirectionalLight.uniformColour,
+                                 uniformDirectionalLight.uniformDiffuseIntensity, uniformDirectionalLight.uniformDirection);
+
+        if ( pointLightCount > MAX_POINT_LIGHTS ) pointLightCount = MAX_POINT_LIGHTS;
+
+        glUniform1i(uniformPointLightCount, pointLightCount);
+
+        for ( size_t i = 0; i < pointLightCount; i++ ) {
+            pointLights[i].useLight(uniformPointLight[i].uniformAmbientIntensity, uniformPointLight[i].uniformColour,
+                                    uniformPointLight[i].uniformDiffuseIntensity, uniformPointLight[i].uniformPosition,
+                                    uniformPointLight[i].uniformConstant, uniformPointLight[i].uniformLinear, uniformPointLight[i].uniformExponent);
+        }
+
+        SpotLight::setSpotLights(shaderList[0], spotLights, uniformSpotLight, spotLightCount);
 
         glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(unifornmView, 1, GL_FALSE, glm::value_ptr(camera.calculateViewMatrix()));
         glUniform3f(uniformEyePosition, camera.getCameraPosition().x, camera.getCameraPosition().y, camera.getCameraPosition().z);
 
         glm::mat4 model(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, -2.5f));
 //        model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0f));
-
-        // glUniform — Specify the value of a uniform variable for the current program object
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-
         brickTexture.UserTexture();
         shinyMaterial.UseMateril(uniformSpecularIntesity, uniformShininess);
         meshList[0]->RenderMesh();
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, -2.0f, 0.0f));
+//        model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0f));
+        glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+        plainTexture.UserTexture();
+        shinyMaterial.UseMateril(uniformSpecularIntesity, uniformShininess);
+        meshList[1]->RenderMesh();
 
         // glUseProgram — Installs a program object as part of current rendering state
         glUseProgram(0);
@@ -203,8 +254,13 @@ int main() {
         window.SwapBuffers();
     }
 
-    delete mesh;
-    delete shader;
+    for ( auto& mesh : meshList ) {
+        delete mesh;
+    }
+
+    for ( auto& shader : shaderList ) {
+        delete shader;
+    }
 
     return 0;
 }
