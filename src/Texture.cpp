@@ -46,7 +46,7 @@ void Texture::LoadTexture() {
 void Texture::UserTexture() const {
     // glActiveTexture selects which texture unit subsequent texture state calls will affect.
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE, textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
 }
 
 // glDeleteTextures deletes n textures named by the elements of the array textures.

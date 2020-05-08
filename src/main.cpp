@@ -171,8 +171,8 @@ int main() {
         uniformProjection = shaderList[0]->GetProjectionLocation();
         unifornmView = shaderList[0]->GetViewLocation();
         uniformEyePosition = shaderList[0]->GetUniformLocation("eyePosition");
-        uniformSpecularIntesity = shaderList[0]->GetUniformLocation("mateial.specularIntensity");
-        uniformShininess = shaderList[0]->GetUniformLocation("mateial.shininess");
+        uniformSpecularIntesity = shaderList[0]->GetUniformLocation("material.specularIntensity");
+        uniformShininess = shaderList[0]->GetUniformLocation("material.shininess");
 
         DirectionalLight::SetDirectionalLight(directionalLight, uniformDirectionalLight);
         PointLight::SetPointLights(pointLights, uniformPointLight, shaderList[0]->GetUniformLocation("pointLightCount"));

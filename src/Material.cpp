@@ -4,7 +4,7 @@ Material::Material(GLfloat _sIntensity, GLfloat _shine) : specularIntesity(_sInt
 
 Material::~Material() = default;
 
-void Material::UseMateril(GLfloat _specularIntensityLocation, GLfloat _shininessLocation) {
+void Material::UseMateril(GLfloat _specularIntensityLocation, GLfloat _shininessLocation) const {
     glUniform1f(_specularIntensityLocation, specularIntesity);
     glUniform1f(_shininessLocation, shininess);
 }

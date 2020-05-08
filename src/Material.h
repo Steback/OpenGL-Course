@@ -7,7 +7,7 @@ class Material {
     public:
         Material(GLfloat _sIntensity, GLfloat _shine);
         ~Material();
-        void UseMateril(GLfloat _specularIntensityLocation, GLfloat _shininessLocation);
+        void UseMateril(GLfloat _specularIntensityLocation, GLfloat _shininessLocation) const;
 
     private:
         GLfloat specularIntesity;
