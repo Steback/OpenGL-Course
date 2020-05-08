@@ -1,4 +1,3 @@
-#include <iostream>
 #include <vector>
 
 #include "../lib/glm/glm.hpp"
@@ -8,6 +7,7 @@
 #include "Mesh.h"
 #include "Window.h"
 #include "Camera.h"
+#include "Shader.h"
 #include "DirectionalLight.h"
 #include "Material.h"
 #include "Constans.h"
@@ -23,80 +23,71 @@ std::vector<Shader*> shaderList;
 GLfloat deltaTime = 0.0f;
 GLfloat lastTime = 0.0f;
 
-void calcAverageNormals(const unsigned int* _indices, unsigned int _indicesCount, GLfloat* _vertices,
-        unsigned int _verticesCount, unsigned int _vLenght, unsigned int _normalOffset) {
-    for ( unsigned int i = 0; i < _indicesCount; i += 3 ) {
-        unsigned int in0 = _indices[i] * _vLenght;
-        unsigned int in1 = _indices[i + 1] * _vLenght;
-        unsigned int in2 = _indices[i + 2] * _vLenght;
+void calcAverageNormals(const std::vector<GLuint>& indices, std::vector<Shape>& vertices) {
+    for ( size_t i = 0; i < indices.size(); i += 3 ) {
+        unsigned int in0 = indices[i];
+        unsigned int in1 = indices[i + 1];
+        unsigned int in2 = indices[i + 2];
 
-        glm::vec3 v1(_vertices[in1] - _vertices[in0], _vertices[in1 + 1] - _vertices[in0 + 1], _vertices[in1+ 2] - _vertices[in0+ 2]);
-        glm::vec3 v2(_vertices[in2] - _vertices[in0], _vertices[in2 + 1] - _vertices[in0 + 1], _vertices[in2+ 2] - _vertices[in0+ 2]);
-        glm::vec3 normal = glm::normalize(glm::cross(v1, v2));
+        glm::vec3 v1(vertices[in1].position.x - vertices[in0].position.x,
+                     vertices[in1].position.y - vertices[in0].position.y,
+                     vertices[in1].position.z - vertices[in0].position.z);
 
-        in0 += _normalOffset;
-        in1 += _normalOffset;
-        in2 += _normalOffset;
+        glm::vec3 v2(vertices[in2].position.x - vertices[in0].position.x,
+                     vertices[in2].position.y - vertices[in0].position.y,
+                     vertices[in2].position.z - vertices[in0].position.z);
 
-        _vertices[in0] += normal.x;
-        _vertices[in0 + 1] += normal.y;
-        _vertices[in0 + 2] += normal.z;
+        glm::vec3 normal = glm::cross(v1, v2);
+        normal = glm::normalize(normal);
 
-        _vertices[in1] += normal.x;
-        _vertices[in1 + 1] += normal.y;
-        _vertices[in1 + 2] += normal.z;
-
-        _vertices[in2] += normal.x;
-        _vertices[in2 + 1] += normal.y;
-        _vertices[in2 + 2] += normal.z;
+        vertices[in0].normal.x += normal.x; vertices[in0].normal.y += normal.y; vertices[in0].normal.z += normal.z;
+        vertices[in1].normal.x += normal.x; vertices[in1].normal.y += normal.y; vertices[in1].normal.z += normal.z;
+        vertices[in2].normal.x += normal.x; vertices[in2].normal.y += normal.y; vertices[in2].normal.z += normal.z;
     }
 
-    for ( unsigned int i = 0; i < _verticesCount / _vLenght; i++ ) {
-        unsigned int nOffset = i * _vLenght + _normalOffset;
-        glm::vec3 vec = glm::normalize(glm::vec3(_vertices[nOffset], _vertices[nOffset + 1], _vertices[nOffset + 2]));
-
-        _vertices[nOffset] = vec.x;
-        _vertices[nOffset + 1] = vec.y;
-        _vertices[nOffset + 2] = vec.z;
+    for (auto & vertice : vertices)
+    {
+        glm::vec3 vec(vertice.normal.x, vertice.normal.y, vertice.normal.z);
+        vec = glm::normalize(vec);
+        vertice.normal.x = vec.x; vertice.normal.y = vec.y; vertice.normal.z = vec.z;
     }
 }
 
 void createObjects() {
-    unsigned int indices[] = {
-        0, 3, 1,
-        1, 3, 2,
-        2, 3, 0,
-        0, 1, 2
+    std::vector<GLuint> indices {
+            0, 3, 1,
+            1, 3, 2,
+            2, 3, 0,
+            0, 1, 2
     };
 
-    GLfloat vertices[] {
-    //    X      Y     Z     U     V     NX    NY    NZ
-        -1.0f, -1.0f, -0.6f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, -1.0f, 1.0f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f,
-        1.0f, -1.0f, -0.6f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f
+    std::vector<Shape> vertices {
+            {-1.0f, -1.0f, -0.6f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+            { 0.0f, -1.0f, 1.0f,	0.5f, 0.0f,	0.0f, 0.0f, 0.0f },
+            { 1.0f, -1.0f, -0.6f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+            { 0.0f, 1.0f, 0.0f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f }
     };
 
-    unsigned int floorIndices[] = {
+    std::vector<GLuint> floorIndices {
             0, 2, 1,
             1, 2, 3
     };
 
-    GLfloat floorVertices[] = {
-            -10.0f, 0.0f, -10.0f,	0.0f, 0.0f,		0.0f, -1.0f, 0.0f,
-            10.0f, 0.0f, -10.0f,	10.0f, 0.0f,	0.0f, -1.0f, 0.0f,
-            -10.0f, 0.0f, 10.0f,	0.0f, 10.0f,	0.0f, -1.0f, 0.0f,
-            10.0f, 0.0f, 10.0f,		10.0f, 10.0f,	0.0f, -1.0f, 0.0f
+    std::vector<Shape> floorVertices {
+            {-10.0f, 0.0f, -10.0f,	0.0f, 0.0f,		0.0f, -1.0f, 0.0f},
+            {10.0f, 0.0f, -10.0f,	10.0f, 0.0f,	0.0f, -1.0f, 0.0f},
+            {-10.0f, 0.0f, 10.0f,	0.0f, 10.0f,	0.0f, -1.0f, 0.0f},
+            {10.0f, 0.0f, 10.0f,		10.0f, 10.0f,	0.0f, -1.0f, 0.0f}
     };
 
-    calcAverageNormals(indices, 12, vertices, 32, 8, 5);
+    calcAverageNormals(indices,vertices);
 
     Mesh* mesh = new Mesh();
-    mesh->CreateMesh(vertices, indices, 32, 12);
+    mesh->CreateMesh(vertices, indices);
     meshList.push_back(mesh);
 
     Mesh* mesh2 = new Mesh();
-    mesh2->CreateMesh(floorVertices, floorIndices, 32, 6);
+    mesh2->CreateMesh(floorVertices, floorIndices);
     meshList.push_back(mesh2);
 }
 
@@ -122,61 +113,36 @@ int main() {
     plainTexture.LoadTexture();
 
     Material shinyMaterial(4.0f, 256);
+    Material dullMaterial(0.3f, 4);
 
-    unsigned int pointLightCount = 0, spotLightCount = 0;
-
-    DirectionalLight directionalLight(1.0f, 1.0f, 1.0f, 0.1f, 0.1f, 0.0f, 0.0f, -1.0f);
-
-    std::vector<PointLight> pointLights {
-            { 0.0f, 0.0f, 1.0f, 0.0f, 0.1f, 0.0f, 0.0f, 0.0f, 0.3f, 0.2f, 0.1f },
-            { 0.0f, 1.0f, 0.0f, 0.0f, 0.1f, -4.0f, 2.0f, 0.0f, 0.3f, 0.1f, 0.1f }
-    };
-
-    pointLightCount = pointLights.size();
-
-
-    std::vector<SpotLight> spotLights {
-            { 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-              0.0f, 1.0f, 0.0f, 0.3f, 0.2f, 0.1f, 20.0f },
-    };
-
-    spotLightCount = spotLights.size();
-
-    GLuint uniformModel = 0, uniformProjection = 0, unifornmView = 0, uniformEyePosition = 0;
-    GLuint uniformSpecularIntesity = 0, uniformShininess = 0, uniformPointLightCount = 0, uniformSpotLightCount;
-
-    glm::mat4 projection = glm::perspective(45.0f, static_cast<GLfloat>(window.GetBufferWidth()) / static_cast<GLfloat>(window.GetBufferHeight()), 0.1f, 100.0f);
+    DirectionalLight directionalLight(glm::vec3(1.0f, 1.0f, 1.0f), 0.1f, 0.1f, glm::vec3(0.0f, 0.0f, -1.0f));
 
     UniformDirectionalLight uniformDirectionalLight{};
+    DirectionalLight::GetUDirectionalLight(*shaderList[0], uniformDirectionalLight);
+
+    std::vector<PointLight> pointLights {
+            { glm::vec3(0.0f, 0.0f, 1.0f), 0.0f, 0.1f,
+              glm::vec3(0.0f, 0.0f, 0.0f), 0.3f, 0.2f, 0.1f },
+            { glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.1f,
+              glm::vec3(-4.0f, 2.0f, 0.0f), 0.3f, 0.1f, 0.1f }
+    };
+
     std::vector<UniformPointLight> uniformPointLight(MAX_POINT_LIGHTS);
-    std::vector<UniformSpotLight> uniformSpotLight(MAX_SPOT_LIGHTS);
+    PointLight::GetUPointLight(*shaderList[0], uniformPointLight);
 
-    for (size_t i = 0; i < MAX_POINT_LIGHTS; i++) {
-        char locBuff[100] = { '\0' };
+    std::vector<SpotLight> spotLights {
+            { glm::vec3(1.0f, 1.0f, 1.0f), 0.0f, 2.0f, glm::vec3(0.0f, 0.0f, 0.0f),
+              1.0f, 0.0f, 0.0f, glm::vec3(0.0f, -1.0f, 0.0f), 20.0f },
+    };
 
-        snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].base.colour", i);
-        uniformPointLight[i].uniformColour = shaderList[0]->GetUniformLocation(locBuff);
+    std::vector<UniformSpotLight> uniformSpotLight(MAX_POINT_LIGHTS);
+    SpotLight::GetUPointLight(*shaderList[0], uniformSpotLight);
 
-        snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].base.ambientIntensity", i);
-        uniformPointLight[i].uniformAmbientIntensity = shaderList[0]->GetUniformLocation(locBuff);
+    GLuint uniformModel = 0, uniformProjection = 0, unifornmView = 0, uniformEyePosition = 0;
+    GLuint uniformSpecularIntesity = 0, uniformShininess = 0;
 
-        snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].base.diffuseIntensity", i);
-        uniformPointLight[i].uniformDiffuseIntensity = shaderList[0]->GetUniformLocation(locBuff);
-
-        snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].position", i);
-        uniformPointLight[i].uniformPosition = shaderList[0]->GetUniformLocation(locBuff);
-
-        snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].constant", i);
-        uniformPointLight[i].uniformConstant = shaderList[0]->GetUniformLocation(locBuff);
-
-        snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].linear", i);
-        uniformPointLight[i].uniformLinear = shaderList[0]->GetUniformLocation(locBuff);
-
-        snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].exponent", i);
-        uniformPointLight[i].uniformExponent = shaderList[0]->GetUniformLocation(locBuff);
-    }
-
-    SpotLight::getUniformLocation(shaderList[0], uniformSpotLight);
+    glm::mat4 projection = glm::perspective(45.0f, static_cast<GLfloat>(window.GetBufferWidth()) / static_cast<GLfloat>(window.GetBufferHeight()),
+            0.1f, 100.0f);
 
     // Loop until window closed
     while ( window.getShouldClose() ) {
@@ -204,29 +170,13 @@ int main() {
         uniformModel = shaderList[0]->GetModelLocation();
         uniformProjection = shaderList[0]->GetProjectionLocation();
         unifornmView = shaderList[0]->GetViewLocation();
-        uniformDirectionalLight.uniformColour = shaderList[0]->GetUniformLocation("directionalLight.base.colour");
-        uniformDirectionalLight.uniformAmbientIntensity = shaderList[0]->GetUniformLocation("directionalLight.base.ambientIntensity");
-        uniformDirectionalLight.uniformDirection = shaderList[0]->GetUniformLocation("directionalLight.direction");
-        uniformDirectionalLight.uniformDiffuseIntensity = shaderList[0]->GetUniformLocation("directionalLight.base.diffuseIntensity");
         uniformEyePosition = shaderList[0]->GetUniformLocation("eyePosition");
         uniformSpecularIntesity = shaderList[0]->GetUniformLocation("mateial.specularIntensity");
         uniformShininess = shaderList[0]->GetUniformLocation("mateial.shininess");
-        uniformPointLightCount = shaderList[0]->GetUniformLocation("pointLightCount");
 
-        directionalLight.useLight(uniformDirectionalLight.uniformAmbientIntensity,  uniformDirectionalLight.uniformColour,
-                                 uniformDirectionalLight.uniformDiffuseIntensity, uniformDirectionalLight.uniformDirection);
-
-        if ( pointLightCount > MAX_POINT_LIGHTS ) pointLightCount = MAX_POINT_LIGHTS;
-
-        glUniform1i(uniformPointLightCount, pointLightCount);
-
-        for ( size_t i = 0; i < pointLightCount; i++ ) {
-            pointLights[i].useLight(uniformPointLight[i].uniformAmbientIntensity, uniformPointLight[i].uniformColour,
-                                    uniformPointLight[i].uniformDiffuseIntensity, uniformPointLight[i].uniformPosition,
-                                    uniformPointLight[i].uniformConstant, uniformPointLight[i].uniformLinear, uniformPointLight[i].uniformExponent);
-        }
-
-        SpotLight::setSpotLights(shaderList[0], spotLights, uniformSpotLight, spotLightCount);
+        DirectionalLight::SetDirectionalLight(directionalLight, uniformDirectionalLight);
+        PointLight::SetPointLights(pointLights, uniformPointLight, shaderList[0]->GetUniformLocation("pointLightCount"));
+        SpotLight::SetPointLights(spotLights, uniformSpotLight, shaderList[0]->GetUniformLocation("spotLightCount"));
 
         glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(unifornmView, 1, GL_FALSE, glm::value_ptr(camera.calculateViewMatrix()));
@@ -237,7 +187,7 @@ int main() {
 //        model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0f));
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
         brickTexture.UserTexture();
-        shinyMaterial.UseMateril(uniformSpecularIntesity, uniformShininess);
+        dullMaterial.UseMateril(uniformSpecularIntesity, uniformShininess);
         meshList[0]->RenderMesh();
 
         model = glm::mat4(1.0f);

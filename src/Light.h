@@ -7,7 +7,7 @@
 
 class Light {
     public:
-        explicit Light(GLfloat _red, GLfloat _green, GLfloat _blue, GLfloat _ambientIntensity, GLfloat _dIntensity);
+        explicit Light(const glm::vec3& _colour, GLfloat _aIntensity, GLfloat _dIntensity);
         ~Light();
 
     protected:

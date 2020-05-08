@@ -4,8 +4,8 @@ Mesh::Mesh() = default;
 
 Mesh::~Mesh() { ClearMesh(); };
 
-void Mesh::CreateMesh(GLfloat *_vertices, unsigned int *_indices, unsigned int _numOfVertices, unsigned int _numOfIndices) {
-    indexCount = _numOfIndices;
+void Mesh::CreateMesh(const std::vector<Shape>& _vertices, const std::vector<GLuint> & _indices) {
+    indexCount = _indices.size();
 
     // glGenVertexArrays returns n vertex array object names in arrays. There is no guarantee that the names form a contiguous set of integers; however,
     // it is guaranteed that none of the returned names was in use immediately before the call to glGenVertexArrays.
@@ -27,24 +27,24 @@ void Mesh::CreateMesh(GLfloat *_vertices, unsigned int *_indices, unsigned int _
     // glBufferData and glNamedBufferData create a new data store for a buffer object. In case of glBufferData, the buffer object currently bound to target is used.
     // For glNamedBufferData, a buffer object associated with ID specified by the caller in buffer will be used instead.
     // GL_STATIC_DRAW - The data store contents will be modified once and used many times as the source for GL drawing commands.
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(_indices[0]) * _numOfIndices, _indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(_indices[0]) * _indices.size(), &_indices[0], GL_STATIC_DRAW);
 
     glGenBuffers(1, &VBO);
 
     // GL_ARRAY_BUFFER - Vertex attributes
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(_vertices[0]) * _numOfVertices, _vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(_vertices[0]) * _vertices.size(), &_vertices[0], GL_STATIC_DRAW);
 
     // glVertexAttribPointer — define an array of generic vertex attribute data
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(_vertices[0]) * 8, nullptr);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(_vertices[0]), nullptr);
 
     // glEnableVertexAttribArray — Enable or disable a generic vertex attribute array
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(_vertices[0]) * 8, (void*)(sizeof(_vertices[0]) * 3));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(_vertices[0]), (void*)(sizeof(_vertices[0].position)));
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(_vertices[0]) * 8, (void*)(sizeof(_vertices[0]) * 5));
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(_vertices[0]), (void*)( (sizeof(_vertices[0].position)) + (sizeof(_vertices[0].texCoord)) ));
     glEnableVertexAttribArray(2);
 
 

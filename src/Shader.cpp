@@ -1,15 +1,10 @@
 #include <fstream>
 
 #include "Shader.h"
-#include "Constans.h"
 
 Shader::Shader() = default;
 
 Shader::~Shader() { ClearShader(); };
-
-void Shader::CreateFromString(std::string &_vertexCode, std::string &_fragmentCode) {
-    CompileShader(_vertexCode, _fragmentCode);
-}
 
 void Shader::CreateFormFiles(const std::string &_vertexFilePath, const std::string &_fragmentFilePath) {
     std::string vertexString = ReadFile(_vertexFilePath);

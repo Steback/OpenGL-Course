@@ -1,14 +1,16 @@
-#include "SpotLight.h"
-#include "Constans.h"
+#include <cstdio>
 
-SpotLight::SpotLight(GLfloat _red, GLfloat _green, GLfloat _blue, GLfloat _ambientIntensity, GLfloat _dIntensity, GLfloat _xPos, GLfloat _yPos, GLfloat _zPos,
-        GLfloat _xDir, GLfloat _yDir, GLfloat _zDir, GLfloat _cons, GLfloat _lin, GLfloat _exp, GLfloat _edge)
-        : PointLight(_red, _green, _blue, _ambientIntensity, _dIntensity, _xPos, _yPos, _zPos, _cons, _lin, _exp),
-        direction(glm::vec3(_xDir, _yDir, _zDir)), edge(_edge), procEdge(glm::radians(_edge)) {  }
+#include "SpotLight.h"
+#include "Shader.h"
+
+SpotLight::SpotLight(const glm::vec3& _colour, GLfloat _aIntensity, GLfloat _dIntensity, const glm::vec3& _position, GLfloat _con, GLfloat _lin, GLfloat _exp,
+                     const glm::vec3& _direction, GLfloat _edge)
+        : PointLight(_colour, _aIntensity, _dIntensity, _position, _con, _lin, _exp), direction(glm::normalize(_direction)),
+          edge(_edge), procEdge(cosf(glm::radians(_edge))) {  }
 
 SpotLight::~SpotLight() = default;
 
-void SpotLight::useLight(GLuint _ambientIntensityLocation, GLuint _ambienColourLocation, GLuint _diffuseIntensityLocation, GLuint _positionLocation,
+void SpotLight::UseLight(GLuint _ambientIntensityLocation, GLuint _ambienColourLocation, GLuint _diffuseIntensityLocation, GLuint _positionLocation,
         GLuint _directionLocationGLuint, GLuint _constantLocation, GLuint _linearLocation, GLuint _exponentLocation, GLuint _edgeLocation) const {
     glUniform3f(_ambienColourLocation, colour.x, colour.y, colour.z);
     glUniform1f(_ambientIntensityLocation, ambientIntensity);
@@ -23,47 +25,46 @@ void SpotLight::useLight(GLuint _ambientIntensityLocation, GLuint _ambienColourL
     glUniform1f(_edgeLocation, procEdge);
 }
 
-void SpotLight::getUniformLocation(Shader *_shader, std::vector<UniformSpotLight>& _uniformSpotLight) {
-    for (size_t i = 0; i < _uniformSpotLight.size(); i++) {
+void SpotLight::GetUPointLight(const Shader &_shader, std::vector<UniformSpotLight> &_uSpotLight) {
+    for (size_t i = 0; i < _uSpotLight.size(); i++) {
         char locBuff[100] = { '\0' };
 
-        snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].base.base.colour", i);
-        _uniformSpotLight[i].uniformColour = _shader->GetUniformLocation(locBuff);
+        snprintf(locBuff, sizeof(locBuff), "spotLights[%zu].base.base.colour", i);
+        _uSpotLight[i].uniformColour = _shader.GetUniformLocation(locBuff);
 
-        snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].base.base.ambientIntensity", i);
-        _uniformSpotLight[i].uniformAmbientIntensity = _shader->GetUniformLocation(locBuff);
+        snprintf(locBuff, sizeof(locBuff), "spotLights[%zu].base.base.ambientIntensity", i);
+        _uSpotLight[i].uniformAmbientIntensity = _shader.GetUniformLocation(locBuff);
 
-        snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].base.base.diffuseIntensity", i);
-        _uniformSpotLight[i].uniformDiffuseIntensity = _shader->GetUniformLocation(locBuff);
+        snprintf(locBuff, sizeof(locBuff), "spotLights[%zu].base.base.diffuseIntensity", i);
+        _uSpotLight[i].uniformDiffuseIntensity = _shader.GetUniformLocation(locBuff);
 
-        snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].base.position", i);
-        _uniformSpotLight[i].uniformPosition = _shader->GetUniformLocation(locBuff);
+        snprintf(locBuff, sizeof(locBuff), "spotLights[%zu].base.position", i);
+        _uSpotLight[i].uniformPosition = _shader.GetUniformLocation(locBuff);
 
-        snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].base.constant", i);
-        _uniformSpotLight[i].uniformConstant = _shader->GetUniformLocation(locBuff);
+        snprintf(locBuff, sizeof(locBuff), "spotLights[%zu].base.constant", i);
+        _uSpotLight[i].uniformConstant = _shader.GetUniformLocation(locBuff);
 
-        snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].base.linear", i);
-        _uniformSpotLight[i].uniformLinear = _shader->GetUniformLocation(locBuff);
+        snprintf(locBuff, sizeof(locBuff), "spotLights[%zu].base.linear", i);
+        _uSpotLight[i].uniformLinear = _shader.GetUniformLocation(locBuff);
 
-        snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].base.exponent", i);
-        _uniformSpotLight[i].uniformExponent = _shader->GetUniformLocation(locBuff);
+        snprintf(locBuff, sizeof(locBuff), "spotLights[%zu].base.exponent", i);
+        _uSpotLight[i].uniformExponent = _shader.GetUniformLocation(locBuff);
 
-        snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].direction", i);
-        _uniformSpotLight[i].uniformDirection = _shader->GetUniformLocation(locBuff);
+        snprintf(locBuff, sizeof(locBuff), "spotLights[%zu].direction", i);
+        _uSpotLight[i].uniformDirection = _shader.GetUniformLocation(locBuff);
 
-        snprintf(locBuff, sizeof(locBuff), "pointLights[%zu].edge", i);
-        _uniformSpotLight[i].uniformEdge = _shader->GetUniformLocation(locBuff);
+        snprintf(locBuff, sizeof(locBuff), "spotLights[%zu].edge", i);
+        _uSpotLight[i].uniformEdge = _shader.GetUniformLocation(locBuff);
     }
 }
 
-void SpotLight::setSpotLights(Shader* _shader, const std::vector<SpotLight>& _sLight, const std::vector<UniformSpotLight> &_uniformSpotLight, unsigned int _spotLightCount) {
-    if ( _spotLightCount > MAX_POINT_LIGHTS ) _spotLightCount = MAX_POINT_LIGHTS;
+void SpotLight::SetPointLights(std::vector<SpotLight> &_sLight, const std::vector<UniformSpotLight> &_uSpotLight, GLuint _uSpotLightCount) {
+    glUniform1i(_uSpotLightCount, _sLight.size());
 
-    glUniform1i(_shader->GetUniformLocation("spotLightCount"), _spotLightCount);
-
-    for ( size_t i = 0; i < _spotLightCount; i++ ) {
-        _sLight[i].useLight(_uniformSpotLight[i].uniformAmbientIntensity, _uniformSpotLight[i].uniformColour, _uniformSpotLight[i].uniformDiffuseIntensity,
-                _uniformSpotLight[i].uniformPosition, _uniformSpotLight[i].uniformDirection, _uniformSpotLight[i].uniformConstant, _uniformSpotLight[i].uniformLinear,
-                _uniformSpotLight[i].uniformExponent, _uniformSpotLight[i].uniformEdge);
+    for ( size_t i = 0; i < _sLight.size(); i++ ) {
+        _sLight[i].UseLight(_uSpotLight[i].uniformAmbientIntensity, _uSpotLight[i].uniformColour,
+                            _uSpotLight[i].uniformDiffuseIntensity, _uSpotLight[i].uniformPosition, _uSpotLight[i].uniformDirection,
+                            _uSpotLight[i].uniformConstant, _uSpotLight[i].uniformLinear, _uSpotLight[i].uniformExponent,
+                            _uSpotLight[i].uniformEdge);
     }
 }
