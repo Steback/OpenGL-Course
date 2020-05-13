@@ -5,14 +5,15 @@
 
 #include <GL/glew.h>
 
-#include "../lib/stb/stb_image.h"
+#include <stb_image.h>
 
 class Texture {
     public:
         explicit Texture(std::string  _filePath);
         ~Texture();
-        void LoadTexture();
-        void UserTexture() const;
+        bool LoadTexture();
+        bool LoadTextureA();
+        void UseTexture() const;
         void ClearTexture();
 
     private:

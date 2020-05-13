@@ -68,3 +68,8 @@ void SpotLight::SetPointLights(std::vector<SpotLight> &_sLight, const std::vecto
                             _uSpotLight[i].uniformEdge);
     }
 }
+
+void SpotLight::SetFlash(glm::vec3 _pos, glm::vec3 _dir) {
+    position = _pos;
+    direction = _dir;
+}

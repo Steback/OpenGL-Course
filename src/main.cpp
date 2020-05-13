@@ -4,6 +4,8 @@
 #include "../lib/glm/gtc/matrix_transform.hpp"
 #include "../lib/glm/gtc/type_ptr.hpp"
 
+#include <assimp/Importer.hpp>
+
 #include "Mesh.h"
 #include "Window.h"
 #include "Camera.h"
@@ -13,9 +15,8 @@
 #include "Constans.h"
 #include "PointLight.h"
 #include "SpotLight.h"
-
-#define STB_IMAGE_IMPLEMENTATION
 #include "Texture.h"
+#include "Model.h"
 
 std::vector<Mesh*> meshList;
 std::vector<Shader*> shaderList;
@@ -106,14 +107,19 @@ int main() {
 
     Camera camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 5.0f, 0.5f);
 
-    Texture brickTexture("assets/images/brick.png");
+    Texture brickTexture("Textures/brick.png");
     brickTexture.LoadTexture();
 
-    Texture plainTexture("assets/images/plain.png");
+    Texture plainTexture("Textures/plain.png");
     plainTexture.LoadTexture();
 
     Material shinyMaterial(4.0f, 256);
     Material dullMaterial(0.3f, 4);
+
+    Model xwing;
+    xwing.LoadModel("Models/x-wing.obj");
+
+    Model blackhack;
 
     DirectionalLight directionalLight(glm::vec3(1.0f, 1.0f, 1.0f), 0.1f, 0.1f, glm::vec3(0.0f, 0.0f, -1.0f));
 
@@ -133,6 +139,8 @@ int main() {
     std::vector<SpotLight> spotLights {
             { glm::vec3(1.0f, 1.0f, 1.0f), 0.0f, 2.0f, glm::vec3(0.0f, 0.0f, 0.0f),
               1.0f, 0.0f, 0.0f, glm::vec3(0.0f, -1.0f, 0.0f), 20.0f },
+            { glm::vec3(1.0f, 1.0f, 1.0f), 0.0f, 1.0f, glm::vec3(0.0f, -1.5f, 0.0f),
+              1.0f, 0.0f, 0.0f, glm::vec3(-100.0f, -1.0f, 0.0f), 20.0f }
     };
 
     std::vector<UniformSpotLight> uniformSpotLight(MAX_POINT_LIGHTS);
@@ -174,6 +182,8 @@ int main() {
         uniformSpecularIntesity = shaderList[0]->GetUniformLocation("material.specularIntensity");
         uniformShininess = shaderList[0]->GetUniformLocation("material.shininess");
 
+        spotLights[0].SetFlash(camera.getCameraPosition(), camera.getCameraDirection());
+
         DirectionalLight::SetDirectionalLight(directionalLight, uniformDirectionalLight);
         PointLight::SetPointLights(pointLights, uniformPointLight, shaderList[0]->GetUniformLocation("pointLightCount"));
         SpotLight::SetPointLights(spotLights, uniformSpotLight, shaderList[0]->GetUniformLocation("spotLightCount"));
@@ -186,17 +196,24 @@ int main() {
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, -2.5f));
 //        model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0f));
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-        brickTexture.UserTexture();
-        dullMaterial.UseMateril(uniformSpecularIntesity, uniformShininess);
+        brickTexture.UseTexture();
+        shinyMaterial.UseMateril(uniformSpecularIntesity, uniformShininess);
         meshList[0]->RenderMesh();
 
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, -2.0f, 0.0f));
 //        model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0f));
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-        plainTexture.UserTexture();
+        brickTexture.UseTexture();
         shinyMaterial.UseMateril(uniformSpecularIntesity, uniformShininess);
         meshList[1]->RenderMesh();
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, -2.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(0.005f, 0.005f, 0.005f));
+        glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+        shinyMaterial.UseMateril(uniformSpecularIntesity, uniformShininess);
+        xwing.RenderModel();
 
         // glUseProgram — Installs a program object as part of current rendering state
         glUseProgram(0);

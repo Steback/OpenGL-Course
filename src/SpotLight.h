@@ -26,6 +26,7 @@ class SpotLight : public PointLight {
                       GLuint _directionLocationGLuint, GLuint _constantLocation, GLuint _linearLocation, GLuint _exponentLocation, GLuint _edgeLocation) const;
         static void GetUPointLight(const Shader& _shader, std::vector<UniformSpotLight>& _uSpotLight);
         static void SetPointLights(std::vector<SpotLight> &_sLight, const std::vector<UniformSpotLight> &_uSpotLight, GLuint _uSpotLightCount);
+        void SetFlash(glm::vec3 _pos, glm::vec3 _dir);
 
     private:
         glm::vec3 direction;

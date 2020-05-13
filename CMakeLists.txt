@@ -6,17 +6,23 @@ set(CMAKE_CXX_STANDARD 20)
 find_library(GLEW REQUIRED)
 find_library(glfw REQUIRED)
 find_library(OpenGL REQUIRED)
+find_library(assimp REQUIRED)
 
 file(GLOB SOURCE_FILES ./src/*.cpp )
 
+include_directories(
+        # stb_image
+        ${PROJECT_SOURCE_DIR}/lib/stb
+)
+
 add_executable( ${PROJECT_NAME} ${SOURCE_FILES} )
-target_link_libraries( ${PROJECT_NAME} GLEW glfw OpenGL )
+target_link_libraries( ${PROJECT_NAME} GLEW glfw OpenGL assimp )
 
 set(EXECUTABLE_OUTPUT_PATH "..")
 
 set_target_properties(
         ${PROJECT_NAME}
         PROPERTIES
-        OUTPUT_NAME "${PROJECT_NAME}"
+        OUTPUT_NAME "Game"
         SUFFIX ".o"
 )
