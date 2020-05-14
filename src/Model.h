@@ -19,7 +19,7 @@ class Model {
         void RenderModel();
         void ClearModel();
 
-private:
+    private:
         std::vector<Mesh*> meshList;
         std::vector<Texture*> textureList;
         std::vector<unsigned int> meshToTex;

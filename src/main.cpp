@@ -4,8 +4,6 @@
 #include "../lib/glm/gtc/matrix_transform.hpp"
 #include "../lib/glm/gtc/type_ptr.hpp"
 
-#include <assimp/Importer.hpp>
-
 #include "Mesh.h"
 #include "Window.h"
 #include "Camera.h"
@@ -108,10 +106,10 @@ int main() {
     Camera camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 5.0f, 0.5f);
 
     Texture brickTexture("Textures/brick.png");
-    brickTexture.LoadTexture();
+    brickTexture.LoadTextureA();
 
     Texture plainTexture("Textures/plain.png");
-    plainTexture.LoadTexture();
+    plainTexture.LoadTextureA();
 
     Material shinyMaterial(4.0f, 256);
     Material dullMaterial(0.3f, 4);

@@ -71,10 +71,8 @@ void Model::LoadMesh(aiMesh *_mesh, const aiScene *_scene) {
     }
 
     for ( size_t i = 0; i < _mesh->mNumFaces; i++ ) {
-        aiFace face = _mesh->mFaces[i];
-
-        for ( size_t j = 0; j < face.mNumIndices; j++ ) {
-            indices.push_back(face.mIndices[j]);
+        for ( size_t j = 0; j < _mesh->mFaces[i].mNumIndices; j++ ) {
+            indices.push_back(_mesh->mFaces[i].mIndices[j]);
         }
     }
 
@@ -96,6 +94,12 @@ void Model::LoadMaterials(const aiScene *_scene) {
             if ( _scene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &path) == AI_SUCCESS ) {
                 int idx = std::string(path.data).rfind('\\');
                 std::string filename = std::string(path.data).substr(idx + 1);
+
+                // Solve problem for case sensitive in extension
+                std::string extension = filename.substr(filename.rfind('.') + 1);
+                transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+                filename.replace(filename.rfind('.') + 1, 3, extension);
+
                 std::string texPath = std::string("Textures/") + filename;
 
                 textureList[i] = new Texture(texPath);

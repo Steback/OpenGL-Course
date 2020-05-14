@@ -1,4 +1,8 @@
+#include <iostream>
+
 #define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include "Texture.h"
 
 Texture::Texture(std::string _filePath) : filePath(std::move(_filePath)), textureID(0), width(0), height(0), bitDepth(0) {  }
@@ -9,7 +13,7 @@ bool Texture::LoadTexture() {
     unsigned char* textureData = stbi_load(filePath.c_str(), &width, &height, &bitDepth, 0);
 
     if ( !textureData ) {
-        printf("Failed to load texture %s\n", filePath.c_str());
+        std::cerr << "Failed to load texture: " << filePath << '\n';
         return false;
     }
 
@@ -36,13 +40,13 @@ bool Texture::LoadTexture() {
 
     // glTexImage2D — specify a two-dimensional texture image
     // GL_RGBA, GL_BGRA - Each element contains all four components. Each component is clamped to the range [0,1].
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
 
     // glGenerateMipmap and glGenerateTextureMipmap generates mipmaps for the specified texture object.
     glGenerateMipmap(GL_TEXTURE_2D);
 
     // glBindTexture — bind a named texture to a texturing target
-    glBindTexture(GL_TEXTURE, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     stbi_image_free(textureData);
 
@@ -53,7 +57,7 @@ bool Texture::LoadTextureA() {
     unsigned char* textureData = stbi_load(filePath.c_str(), &width, &height, &bitDepth, 0);
 
     if ( !textureData ) {
-        printf("Failed to load texture %s\n", filePath.c_str());
+        std::cerr << "Failed to load texture: " << filePath << '\n';
         return false;
     }
 
@@ -70,7 +74,7 @@ bool Texture::LoadTextureA() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    glBindTexture(GL_TEXTURE, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     stbi_image_free(textureData);
 
