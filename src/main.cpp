@@ -16,6 +16,8 @@
 #include "Texture.h"
 #include "Model.h"
 
+const float toRadians = 3.14159265f / 180.0f;
+
 std::vector<Mesh*> meshList;
 std::vector<Shader*> shaderList;
 
@@ -118,8 +120,9 @@ int main() {
     xwing.LoadModel("Models/x-wing.obj");
 
     Model blackhack;
+    blackhack.LoadModel("Models/uh60.obj");
 
-    DirectionalLight directionalLight(glm::vec3(1.0f, 1.0f, 1.0f), 0.1f, 0.1f, glm::vec3(0.0f, 0.0f, -1.0f));
+    DirectionalLight directionalLight(glm::vec3(1.0f, 1.0f, 1.0f), 0.3f, 0.6f, glm::vec3(0.0f, 0.0f, -1.0f));
 
     UniformDirectionalLight uniformDirectionalLight{};
     DirectionalLight::GetUDirectionalLight(*shaderList[0], uniformDirectionalLight);
@@ -180,7 +183,7 @@ int main() {
         uniformSpecularIntesity = shaderList[0]->GetUniformLocation("material.specularIntensity");
         uniformShininess = shaderList[0]->GetUniformLocation("material.shininess");
 
-        spotLights[0].SetFlash(camera.getCameraPosition(), camera.getCameraDirection());
+//        spotLights[0].SetFlash(camera.getCameraPosition(), camera.getCameraDirection());
 
         DirectionalLight::SetDirectionalLight(directionalLight, uniformDirectionalLight);
         PointLight::SetPointLights(pointLights, uniformPointLight, shaderList[0]->GetUniformLocation("pointLightCount"));
@@ -207,11 +210,19 @@ int main() {
         meshList[1]->RenderMesh();
 
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, -2.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(0.005f, 0.005f, 0.005f));
+        model = glm::translate(model, glm::vec3(-12.0f, 0.0f, 12.0f));
+        model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f));
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
         shinyMaterial.UseMateril(uniformSpecularIntesity, uniformShininess);
         xwing.RenderModel();
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 5.0f));
+        model = glm::rotate(model, -90.0f * toRadians, glm::vec3(1.0f, 0.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
+        glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+        shinyMaterial.UseMateril(uniformSpecularIntesity, uniformShininess);
+        blackhack.RenderModel();
 
         // glUseProgram — Installs a program object as part of current rendering state
         glUseProgram(0);
