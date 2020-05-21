@@ -1,4 +1,5 @@
 #include <vector>
+#include <memory>
 
 #include "../lib/glm/glm.hpp"
 #include "../lib/glm/gtc/matrix_transform.hpp"
@@ -18,8 +19,30 @@
 
 const float toRadians = 3.14159265f / 180.0f;
 
+std::unique_ptr<Window> window;
+
 std::vector<Mesh*> meshList;
 std::vector<Shader*> shaderList;
+
+std::unique_ptr<Camera> camera;
+
+std::unique_ptr<Texture> brickTexture;
+std::unique_ptr<Texture> plainTexture;
+
+std::unique_ptr<Material> shinyMaterial;
+std::unique_ptr<Material> dullMaterial;
+
+DirectionalLight* directionalLight;
+UniformDirectionalLight* uniformDirectionalLight;
+
+std::vector<PointLight> pointLights;
+std::vector<UniformPointLight> uniformPointLight;
+
+std::vector<SpotLight> spotLights;
+std::vector<UniformSpotLight> uniformSpotLight;
+
+std::unique_ptr<Model> xwing;
+std::unique_ptr<Model> blackhack;
 
 GLfloat deltaTime = 0.0f;
 GLfloat lastTime = 0.0f;
@@ -99,62 +122,62 @@ void CreateShaders() {
 }
 
 int main() {
-    Window window(1366, 768);
-    window.Initialise();
+    window = std::make_unique<Window>(1366, 768);
+    window->Initialise();
 
     createObjects();
     CreateShaders();
 
-    Camera camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 5.0f, 0.5f);
+    camera = std::make_unique<Camera>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 5.0f, 0.5f);
 
-    Texture brickTexture("Textures/brick.png");
-    brickTexture.LoadTextureA();
+    brickTexture = std::make_unique<Texture>("Textures/brick.png");
+    brickTexture->LoadTextureA();
 
-    Texture plainTexture("Textures/plain.png");
-    plainTexture.LoadTextureA();
+    plainTexture = std::make_unique<Texture>("Textures/dirt.png");
+    plainTexture->LoadTextureA();
 
-    Material shinyMaterial(4.0f, 256);
-    Material dullMaterial(0.3f, 4);
+    shinyMaterial = std::make_unique<Material>(4.0f, 256);
+    dullMaterial = std::make_unique<Material>(0.3f, 4);
 
-    Model xwing;
-    xwing.LoadModel("Models/x-wing.obj");
+    xwing = std::make_unique<Model>();
+    xwing->LoadModel("Models/x-wing.obj");
 
-    Model blackhack;
-    blackhack.LoadModel("Models/uh60.obj");
+    blackhack = std::make_unique<Model>();
+    blackhack->LoadModel("Models/uh60.obj");
 
-    DirectionalLight directionalLight(glm::vec3(1.0f, 1.0f, 1.0f), 0.3f, 0.6f, glm::vec3(0.0f, 0.0f, -1.0f));
+    directionalLight = new DirectionalLight(glm::vec3(1.0f, 1.0f, 1.0f), 0.3f, 0.6f, glm::vec3(0.0f, 0.0f, -1.0f));
 
-    UniformDirectionalLight uniformDirectionalLight{};
-    DirectionalLight::GetUDirectionalLight(*shaderList[0], uniformDirectionalLight);
+    uniformDirectionalLight = new UniformDirectionalLight();
+    DirectionalLight::GetUDirectionalLight(*shaderList[0], *uniformDirectionalLight);
 
-    std::vector<PointLight> pointLights {
+    pointLights = {
             { glm::vec3(0.0f, 0.0f, 1.0f), 0.0f, 0.1f,
               glm::vec3(0.0f, 0.0f, 0.0f), 0.3f, 0.2f, 0.1f },
             { glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.1f,
               glm::vec3(-4.0f, 2.0f, 0.0f), 0.3f, 0.1f, 0.1f }
     };
 
-    std::vector<UniformPointLight> uniformPointLight(MAX_POINT_LIGHTS);
+    uniformPointLight = std::vector<UniformPointLight>(MAX_POINT_LIGHTS);
     PointLight::GetUPointLight(*shaderList[0], uniformPointLight);
 
-    std::vector<SpotLight> spotLights {
+    spotLights = {
             { glm::vec3(1.0f, 1.0f, 1.0f), 0.0f, 2.0f, glm::vec3(0.0f, 0.0f, 0.0f),
               1.0f, 0.0f, 0.0f, glm::vec3(0.0f, -1.0f, 0.0f), 20.0f },
             { glm::vec3(1.0f, 1.0f, 1.0f), 0.0f, 1.0f, glm::vec3(0.0f, -1.5f, 0.0f),
               1.0f, 0.0f, 0.0f, glm::vec3(-100.0f, -1.0f, 0.0f), 20.0f }
     };
 
-    std::vector<UniformSpotLight> uniformSpotLight(MAX_POINT_LIGHTS);
+    uniformSpotLight = std::vector<UniformSpotLight>(MAX_POINT_LIGHTS);
     SpotLight::GetUPointLight(*shaderList[0], uniformSpotLight);
 
     GLuint uniformModel = 0, uniformProjection = 0, unifornmView = 0, uniformEyePosition = 0;
     GLuint uniformSpecularIntesity = 0, uniformShininess = 0;
 
-    glm::mat4 projection = glm::perspective(45.0f, static_cast<GLfloat>(window.GetBufferWidth()) / static_cast<GLfloat>(window.GetBufferHeight()),
+    glm::mat4 projection = glm::perspective(45.0f, static_cast<GLfloat>(window->GetBufferWidth()) / static_cast<GLfloat>(window->GetBufferHeight()),
             0.1f, 100.0f);
 
     // Loop until window closed
-    while ( window.getShouldClose() ) {
+    while ( window->getShouldClose() ) {
 
         // This function returns the value of the GLFW timer.
         GLfloat now = glfwGetTime();
@@ -165,8 +188,8 @@ int main() {
         // Processing events will cause the window and input callbacks associated with those events to be called.
         glfwPollEvents();
 
-        camera.KeyControl(window.getKeys(), deltaTime);
-        camera.MouseControl(window.getXChange(), window.getYChange());
+        camera->KeyControl(window->getKeys(), deltaTime);
+        camera->MouseControl(window->getXChange(), window->getYChange());
 
         // glClearColor — specify clear values for the color buffers
         glClearColor(0, 0, 0, 1);
@@ -185,49 +208,49 @@ int main() {
 
 //        spotLights[0].SetFlash(camera.getCameraPosition(), camera.getCameraDirection());
 
-        DirectionalLight::SetDirectionalLight(directionalLight, uniformDirectionalLight);
+        DirectionalLight::SetDirectionalLight(*directionalLight, *uniformDirectionalLight);
         PointLight::SetPointLights(pointLights, uniformPointLight, shaderList[0]->GetUniformLocation("pointLightCount"));
         SpotLight::SetPointLights(spotLights, uniformSpotLight, shaderList[0]->GetUniformLocation("spotLightCount"));
 
         glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
-        glUniformMatrix4fv(unifornmView, 1, GL_FALSE, glm::value_ptr(camera.calculateViewMatrix()));
-        glUniform3f(uniformEyePosition, camera.getCameraPosition().x, camera.getCameraPosition().y, camera.getCameraPosition().z);
+        glUniformMatrix4fv(unifornmView, 1, GL_FALSE, glm::value_ptr(camera->calculateViewMatrix()));
+        glUniform3f(uniformEyePosition, camera->getCameraPosition().x, camera->getCameraPosition().y, camera->getCameraPosition().z);
 
         glm::mat4 model(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, -2.5f));
 //        model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0f));
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-        brickTexture.UseTexture();
-        shinyMaterial.UseMateril(uniformSpecularIntesity, uniformShininess);
+        brickTexture->UseTexture();
+        shinyMaterial->UseMateril(uniformSpecularIntesity, uniformShininess);
         meshList[0]->RenderMesh();
 
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, -2.0f, 0.0f));
 //        model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0f));
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-        brickTexture.UseTexture();
-        shinyMaterial.UseMateril(uniformSpecularIntesity, uniformShininess);
+        plainTexture->UseTexture();
+        dullMaterial->UseMateril(uniformSpecularIntesity, uniformShininess);
         meshList[1]->RenderMesh();
 
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(-12.0f, 0.0f, 12.0f));
         model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f));
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-        shinyMaterial.UseMateril(uniformSpecularIntesity, uniformShininess);
-        xwing.RenderModel();
+        shinyMaterial->UseMateril(uniformSpecularIntesity, uniformShininess);
+        xwing->RenderModel();
 
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 5.0f));
         model = glm::rotate(model, -90.0f * toRadians, glm::vec3(1.0f, 0.0f, 0.0f));
         model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-        shinyMaterial.UseMateril(uniformSpecularIntesity, uniformShininess);
-        blackhack.RenderModel();
+        shinyMaterial->UseMateril(uniformSpecularIntesity, uniformShininess);
+        blackhack->RenderModel();
 
         // glUseProgram — Installs a program object as part of current rendering state
         glUseProgram(0);
 
-        window.SwapBuffers();
+        window->SwapBuffers();
     }
 
     for ( auto& mesh : meshList ) {
@@ -237,6 +260,9 @@ int main() {
     for ( auto& shader : shaderList ) {
         delete shader;
     }
+
+    delete directionalLight;
+    delete uniformDirectionalLight;
 
     return 0;
 }
