@@ -47,6 +47,9 @@ std::unique_ptr<Model> blackhack;
 GLfloat deltaTime = 0.0f;
 GLfloat lastTime = 0.0f;
 
+GLuint uniformModel = 0, uniformProjection = 0, unifornmView = 0, uniformEyePosition = 0;
+GLuint uniformSpecularIntesity = 0, uniformShininess = 0;
+
 void calcAverageNormals(const std::vector<GLuint>& indices, std::vector<Shape>& vertices) {
     for ( size_t i = 0; i < indices.size(); i += 3 ) {
         unsigned int in0 = indices[i];
@@ -121,6 +124,37 @@ void CreateShaders() {
     shaderList.push_back(shader);
 }
 
+void RenderScene() {
+    glm::mat4 model(1.0f);
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, -2.5f));
+    glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+    brickTexture->UseTexture();
+    shinyMaterial->UseMateril(uniformSpecularIntesity, uniformShininess);
+    meshList[0]->RenderMesh();
+
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0f, -2.0f, 0.0f));
+    glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+    plainTexture->UseTexture();
+    dullMaterial->UseMateril(uniformSpecularIntesity, uniformShininess);
+    meshList[1]->RenderMesh();
+
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(-12.0f, 0.0f, 12.0f));
+    model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f));
+    glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+    shinyMaterial->UseMateril(uniformSpecularIntesity, uniformShininess);
+    xwing->RenderModel();
+
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 5.0f));
+    model = glm::rotate(model, -90.0f * toRadians, glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
+    glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+    shinyMaterial->UseMateril(uniformSpecularIntesity, uniformShininess);
+    blackhack->RenderModel();
+}
+
 int main() {
     window = std::make_unique<Window>(1366, 768);
     window->Initialise();
@@ -170,9 +204,6 @@ int main() {
     uniformSpotLight = std::vector<UniformSpotLight>(MAX_POINT_LIGHTS);
     SpotLight::GetUPointLight(*shaderList[0], uniformSpotLight);
 
-    GLuint uniformModel = 0, uniformProjection = 0, unifornmView = 0, uniformEyePosition = 0;
-    GLuint uniformSpecularIntesity = 0, uniformShininess = 0;
-
     glm::mat4 projection = glm::perspective(45.0f, static_cast<GLfloat>(window->GetBufferWidth()) / static_cast<GLfloat>(window->GetBufferHeight()),
             0.1f, 100.0f);
 
@@ -216,36 +247,7 @@ int main() {
         glUniformMatrix4fv(unifornmView, 1, GL_FALSE, glm::value_ptr(camera->calculateViewMatrix()));
         glUniform3f(uniformEyePosition, camera->getCameraPosition().x, camera->getCameraPosition().y, camera->getCameraPosition().z);
 
-        glm::mat4 model(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, -2.5f));
-//        model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0f));
-        glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-        brickTexture->UseTexture();
-        shinyMaterial->UseMateril(uniformSpecularIntesity, uniformShininess);
-        meshList[0]->RenderMesh();
-
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, -2.0f, 0.0f));
-//        model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0f));
-        glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-        plainTexture->UseTexture();
-        dullMaterial->UseMateril(uniformSpecularIntesity, uniformShininess);
-        meshList[1]->RenderMesh();
-
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-12.0f, 0.0f, 12.0f));
-        model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f));
-        glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-        shinyMaterial->UseMateril(uniformSpecularIntesity, uniformShininess);
-        xwing->RenderModel();
-
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 5.0f));
-        model = glm::rotate(model, -90.0f * toRadians, glm::vec3(1.0f, 0.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
-        glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-        shinyMaterial->UseMateril(uniformSpecularIntesity, uniformShininess);
-        blackhack->RenderModel();
+        RenderScene();
 
         // glUseProgram — Installs a program object as part of current rendering state
         glUseProgram(0);
