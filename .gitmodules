@@ -1,0 +1,8 @@
+[submodule "lib/assimp"]
+	path = lib/assimp
+	url = git@github.com:assimp/assimp.git
+	branch = assimp_5.0_release
+[submodule "lib/glfw"]
+	path = lib/glfw
+	url = git@github.com:glfw/glfw.git
+	branch = 3.3-stable
