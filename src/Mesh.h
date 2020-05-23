@@ -5,7 +5,7 @@
 
 #include <GL/glew.h>
 
-#include "../lib/glm/glm.hpp"
+#include "glm/glm.hpp"
 
 struct Shape {
     glm::vec3 position;

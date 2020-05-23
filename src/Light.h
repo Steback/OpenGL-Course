@@ -3,7 +3,7 @@
 
 #include <GL/glew.h>
 
-#include "../lib/glm/glm.hpp"
+#include "glm/glm.hpp"
 
 class Light {
     public:

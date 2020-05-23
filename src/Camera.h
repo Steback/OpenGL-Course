@@ -4,7 +4,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "../lib/glm/glm.hpp"
+#include "glm/glm.hpp"
 
 class Camera {
     public:

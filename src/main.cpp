@@ -1,9 +1,9 @@
 #include <vector>
 #include <memory>
 
-#include "../lib/glm/glm.hpp"
-#include "../lib/glm/gtc/matrix_transform.hpp"
-#include "../lib/glm/gtc/type_ptr.hpp"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
 #include "Mesh.h"
 #include "Window.h"

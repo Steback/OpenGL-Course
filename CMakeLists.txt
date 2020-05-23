@@ -4,9 +4,7 @@ project(opengl-examples)
 set(CMAKE_CXX_STANDARD 20)
 
 find_library(GLEW REQUIRED)
-find_library(glfw REQUIRED)
 find_library(OpenGL REQUIRED)
-find_library(assimp REQUIRED)
 
 file(GLOB SOURCE_FILES ./src/*.cpp )
 
@@ -15,8 +13,17 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/lib/stb
 )
 
+add_subdirectory( lib/glm )
+
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory( lib/glfw )
+
+add_subdirectory( lib/assimp )
+
 add_executable( ${PROJECT_NAME} ${SOURCE_FILES} )
-target_link_libraries( ${PROJECT_NAME} GLEW glfw OpenGL assimp )
+target_link_libraries( ${PROJECT_NAME} GLEW OpenGL glfw glm assimp )
 
 set(EXECUTABLE_OUTPUT_PATH "..")
 
