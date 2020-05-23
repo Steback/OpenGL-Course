@@ -23,7 +23,7 @@ add_subdirectory( lib/glfw )
 add_subdirectory( lib/assimp )
 
 add_executable( ${PROJECT_NAME} ${SOURCE_FILES} )
-target_link_libraries( ${PROJECT_NAME} GLEW OpenGL glfw glm assimp )
+target_link_libraries( ${PROJECT_NAME} OpenGL GLEW glfw glm assimp )
 
 set(EXECUTABLE_OUTPUT_PATH "..")
 
