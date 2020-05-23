@@ -10,3 +10,6 @@
 	path = lib/glm
 	url = git@github.com:g-truc/glm.git
 	branch = 0.9.8
+[submodule "lib/stb"]
+	path = lib/stb
+	url = git@github.com:nothings/stb.git
