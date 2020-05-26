@@ -4,6 +4,7 @@ in vec4 vCol;
 in vec2 TexCoord;
 in vec3 Normal;
 in vec3 FragPos;
+in vec4 DirectionalLightSpacePos;
 
 out vec4 colour;
 
@@ -48,11 +49,25 @@ uniform PointLight pointLights[MAX_POINT_LIGHTS];
 uniform SpotLight spotLights[MAX_SPOT_LIGHTS];
 
 uniform sampler2D Texture;
+uniform sampler2D directionalShadowMap;
+
 uniform Material material;
 
 uniform vec3 eyePosition;
 
-vec4 CalcLightByDirection(Light light, vec3 direction) {
+float CalcDirectionalShadowFactor(DirectionalLight light) {
+    vec3 projCoords = DirectionalLightSpacePos.xyz / DirectionalLightSpacePos.w;
+    projCoords = ( projCoords * 0.5 ) + 0.5;
+
+    float closest = texture(directionalShadowMap, projCoords.xy).r;
+    float current = projCoords.z;
+
+    float shadow = current > closest ? 1.0 : 0.0;
+
+    return shadow;
+}
+
+vec4 CalcLightByDirection(Light light, vec3 direction, float shadowFactor) {
     vec4 ambientColour = vec4(light.colour, 1.0f) * light.ambientIntensity;
 
     float diffuseFactor = max( dot( normalize(Normal), normalize(direction) ), 0.0f);
@@ -72,7 +87,7 @@ vec4 CalcLightByDirection(Light light, vec3 direction) {
         }
     }
 
-    return (ambientColour + diffuseColour + specularColour);
+    return ( ambientColour + ( 1.0 - shadowFactor ) * ( diffuseColour + specularColour ) );
 }
 
 vec4 CalcPointLight(PointLight pLight) {
@@ -80,10 +95,10 @@ vec4 CalcPointLight(PointLight pLight) {
     float distance = length(direction);
     direction = normalize(direction);
 
-    vec4 colour = CalcLightByDirection(pLight.base, direction);
+    vec4 colour = CalcLightByDirection(pLight.base, direction, 0.0);
     float attenuation = pLight.exponent * distance * distance +
-    pLight.linear * distance +
-    pLight.constant;
+        pLight.linear * distance +
+        pLight.constant;
 
     return (colour / attenuation);
 }
@@ -123,7 +138,8 @@ vec4 CalcSpotLights() {
 }
 
 void main() {
-    vec4 finalColour = CalcLightByDirection(directionalLight.base, directionalLight.direction);
+    float shadowFactor = CalcDirectionalShadowFactor(directionalLight);
+    vec4 finalColour = CalcLightByDirection(directionalLight.base, directionalLight.direction, shadowFactor);
     finalColour += CalcPointLights();
     finalColour += CalcSpotLights();
 

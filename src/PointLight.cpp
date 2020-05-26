@@ -4,7 +4,7 @@
 #include "Shader.h"
 
 PointLight::PointLight(const glm::vec3& _colour, GLfloat _aIntensity, GLfloat _dIntensity, const glm::vec3& _position, GLfloat con, GLfloat lin, GLfloat exp)
-        : Light(_colour, _aIntensity, _dIntensity), position(_position), constant(con), linear(lin), exponent(exp) {  }
+        : Light(1024, 1024, _colour, _aIntensity, _dIntensity), position(_position), constant(con), linear(lin), exponent(exp) {  }
 
 PointLight::~PointLight() = default;
 

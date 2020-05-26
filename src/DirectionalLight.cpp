@@ -1,8 +1,12 @@
+#include "glm/gtc/matrix_transform.hpp"
+
 #include "DirectionalLight.h"
 #include "Shader.h"
 
-DirectionalLight::DirectionalLight(const glm::vec3& _colour, GLfloat _aIntensity, GLfloat _dIntensity, const glm::vec3& _direction)
-        : Light(_colour, _aIntensity, _dIntensity), direction(_direction) {  }
+DirectionalLight::DirectionalLight(GLfloat _width, GLfloat _height, const glm::vec3& _colour, GLfloat _aIntensity, GLfloat _dIntensity, const glm::vec3& _direction)
+        : Light(_width, _height, _colour, _aIntensity, _dIntensity), direction(_direction) {
+    lightProj = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, 0.1f, 20.0f);
+}
 
 DirectionalLight::~DirectionalLight() = default;
 
@@ -25,4 +29,8 @@ void DirectionalLight::GetUDirectionalLight(const Shader& _shader, UniformDirect
 void DirectionalLight::SetDirectionalLight(DirectionalLight &_dLight, const UniformDirectionalLight &_uDirectionalLight) {
     _dLight.UseLight(_uDirectionalLight.uniformAmbientIntensity, _uDirectionalLight.uniformColour,
                      _uDirectionalLight.uniformDiffuseIntensity, _uDirectionalLight.uniformDirection);
+}
+
+glm::mat4 DirectionalLight::CalcLightTransform() {
+    return lightProj * glm::lookAt(-direction, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 }

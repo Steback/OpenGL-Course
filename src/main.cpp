@@ -16,13 +16,16 @@
 #include "SpotLight.h"
 #include "Texture.h"
 #include "Model.h"
+#include "ShadowMap.h"
 
 const float toRadians = 3.14159265f / 180.0f;
 
 std::unique_ptr<Window> window;
 
 std::vector<Mesh*> meshList;
+
 std::vector<Shader*> shaderList;
+std::unique_ptr<Shader> directionalShadowShader;
 
 std::unique_ptr<Camera> camera;
 
@@ -72,8 +75,7 @@ void calcAverageNormals(const std::vector<GLuint>& indices, std::vector<Shape>& 
         vertices[in2].normal.x += normal.x; vertices[in2].normal.y += normal.y; vertices[in2].normal.z += normal.z;
     }
 
-    for (auto & vertice : vertices)
-    {
+    for (auto & vertice : vertices) {
         glm::vec3 vec(vertice.normal.x, vertice.normal.y, vertice.normal.z);
         vec = glm::normalize(vec);
         vertice.normal.x = vec.x; vertice.normal.y = vec.y; vertice.normal.z = vec.z;
@@ -89,7 +91,7 @@ void createObjects() {
     };
 
     std::vector<Shape> vertices {
-            {-1.0f, -1.0f, -0.6f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+            { -1.0f, -1.0f, -0.6f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
             { 0.0f, -1.0f, 1.0f,	0.5f, 0.0f,	0.0f, 0.0f, 0.0f },
             { 1.0f, -1.0f, -0.6f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },
             { 0.0f, 1.0f, 0.0f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f }
@@ -122,6 +124,9 @@ void CreateShaders() {
     auto shader = new Shader();
     shader->CreateFormFiles( "Shaders/shader.vert", "Shaders/shader.frag");
     shaderList.push_back(shader);
+
+    directionalShadowShader = std::make_unique<Shader>();
+    directionalShadowShader->CreateFormFiles("Shaders/directionalShadowMap.vert", "Shaders/directionalShadowMap.frag");
 }
 
 void RenderScene() {
@@ -155,6 +160,61 @@ void RenderScene() {
     blackhack->RenderModel();
 }
 
+void DirectionalShadowMapPass(DirectionalLight* _light) {
+    directionalShadowShader->UseShader();
+
+    glViewport(0, 0, _light->GetShadowMap()->GetShadowHeight(), _light->GetShadowMap()->GetShadowHeight());
+
+    _light->GetShadowMap()->Write();
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    uniformModel = directionalShadowShader->GetModelLocation();
+    ShadowMap::SetDirectionalLightTransform(_light->CalcLightTransform(),
+            directionalShadowShader->GetUniformLocation("directionalLightTransform"));
+
+    RenderScene();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void RenderPass(const glm::mat4& _projection, const glm::mat4 _viewMatrix) {
+    shaderList[0]->UseShader();
+
+    uniformModel = shaderList[0]->GetModelLocation();
+    uniformProjection = shaderList[0]->GetProjectionLocation();
+    unifornmView = shaderList[0]->GetViewLocation();
+    uniformEyePosition = shaderList[0]->GetUniformLocation("eyePosition");
+    uniformSpecularIntesity = shaderList[0]->GetUniformLocation("material.specularIntensity");
+    uniformShininess = shaderList[0]->GetUniformLocation("material.shininess");
+
+    glViewport(0, 0, 1366, 768);
+
+    // glClearColor — specify clear values for the color buffers
+    glClearColor(0, 0, 0, 1);
+
+    // GL_COLOR_BUFFER_BIT - Indicates the buffers currently enabled for color writing.
+    // GL_DEPTH_BUFFER_BIT - Indicates the depth buffer.
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(_projection));
+    glUniformMatrix4fv(unifornmView, 1, GL_FALSE, glm::value_ptr(_viewMatrix));
+    glUniform3f(uniformEyePosition, camera->getCameraPosition().x, camera->getCameraPosition().y, camera->getCameraPosition().z);
+
+    DirectionalLight::SetDirectionalLight(*directionalLight, *uniformDirectionalLight);
+    PointLight::SetPointLights(pointLights, uniformPointLight, shaderList[0]->GetUniformLocation("pointLightCount"));
+    SpotLight::SetPointLights(spotLights, uniformSpotLight, shaderList[0]->GetUniformLocation("spotLightCount"));
+    ShadowMap::SetDirectionalLightTransform(directionalLight->CalcLightTransform(),
+            shaderList[0]->GetUniformLocation("directionalLightTransform"));
+
+    directionalLight->GetShadowMap()->Read(GL_TEXTURE1);
+    ShadowMap::SetTexture(0, shaderList[0]->GetUniformLocation("Texture"));
+    ShadowMap::SetDirectionalShadowMap(1, shaderList[0]->GetUniformLocation("directionalShadowMap"));
+
+    //        spotLights[0].SetFlash(camera.getCameraPosition(), camera.getCameraDirection());
+
+    RenderScene();
+}
+
 int main() {
     window = std::make_unique<Window>(1366, 768);
     window->Initialise();
@@ -179,7 +239,8 @@ int main() {
     blackhack = std::make_unique<Model>();
     blackhack->LoadModel("Models/uh60.obj");
 
-    directionalLight = new DirectionalLight(glm::vec3(1.0f, 1.0f, 1.0f), 0.3f, 0.6f, glm::vec3(0.0f, 0.0f, -1.0f));
+    directionalLight = new DirectionalLight(1024, 1024, glm::vec3(1.0f, 1.0f, 1.0f),
+            0.3f, 0.6f, glm::vec3(0.0f, 0.0f, -1.0f));
 
     uniformDirectionalLight = new UniformDirectionalLight();
     DirectionalLight::GetUDirectionalLight(*shaderList[0], *uniformDirectionalLight);
@@ -222,32 +283,8 @@ int main() {
         camera->KeyControl(window->getKeys(), deltaTime);
         camera->MouseControl(window->getXChange(), window->getYChange());
 
-        // glClearColor — specify clear values for the color buffers
-        glClearColor(0, 0, 0, 1);
-
-        // GL_COLOR_BUFFER_BIT - Indicates the buffers currently enabled for color writing.
-        // GL_DEPTH_BUFFER_BIT - Indicates the depth buffer.
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        shaderList[0]->UseShader();
-        uniformModel = shaderList[0]->GetModelLocation();
-        uniformProjection = shaderList[0]->GetProjectionLocation();
-        unifornmView = shaderList[0]->GetViewLocation();
-        uniformEyePosition = shaderList[0]->GetUniformLocation("eyePosition");
-        uniformSpecularIntesity = shaderList[0]->GetUniformLocation("material.specularIntensity");
-        uniformShininess = shaderList[0]->GetUniformLocation("material.shininess");
-
-//        spotLights[0].SetFlash(camera.getCameraPosition(), camera.getCameraDirection());
-
-        DirectionalLight::SetDirectionalLight(*directionalLight, *uniformDirectionalLight);
-        PointLight::SetPointLights(pointLights, uniformPointLight, shaderList[0]->GetUniformLocation("pointLightCount"));
-        SpotLight::SetPointLights(spotLights, uniformSpotLight, shaderList[0]->GetUniformLocation("spotLightCount"));
-
-        glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
-        glUniformMatrix4fv(unifornmView, 1, GL_FALSE, glm::value_ptr(camera->calculateViewMatrix()));
-        glUniform3f(uniformEyePosition, camera->getCameraPosition().x, camera->getCameraPosition().y, camera->getCameraPosition().z);
-
-        RenderScene();
+        DirectionalShadowMapPass(directionalLight);
+        RenderPass(projection, camera->calculateViewMatrix());
 
         // glUseProgram — Installs a program object as part of current rendering state
         glUseProgram(0);
