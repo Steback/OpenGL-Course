@@ -9,7 +9,7 @@ class ShadowMap;
 
 class Light {
     public:
-        explicit Light(GLfloat _width, GLfloat _height, const glm::vec3& _colour, GLfloat _aIntensity, GLfloat _dIntensity);
+        explicit Light(GLuint _width, GLuint _height, const glm::vec3& _colour, GLfloat _aIntensity, GLfloat _dIntensity);
         ~Light();
         ShadowMap* GetShadowMap() const;
 

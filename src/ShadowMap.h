@@ -5,6 +5,8 @@
 
 #include <GL/glew.h>
 
+class Shader;
+
 class ShadowMap {
     public:
         ShadowMap();
@@ -14,9 +16,9 @@ class ShadowMap {
         virtual void Read(GLenum _textureUnit);
         GLuint GetShadowWidth() const;
         GLuint GetShadowHeight() const;
-        static void SetTexture(GLuint _textureUnit, GLuint _uTexture);
-        static void SetDirectionalShadowMap(GLuint _textureUnit, GLuint _uDirectionalShadowMap);
-        static void SetDirectionalLightTransform(const glm::mat4& _lTransform, GLuint _uDirectionalLightTransform);
+        static void SetTexture(GLuint _textureUnit, Shader* _shader);
+        static void SetDirectionalShadowMap(GLuint _textureUnit, Shader* _shader);
+        static void SetDirectionalLightTransform(const glm::mat4& _lTransform, Shader* _shader);
 
     protected:
         GLuint FBO, shadowMap;

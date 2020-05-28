@@ -48,7 +48,7 @@ void Window::Initialise() {
     // This function sets an input mode option for the specified window.
     // GLFW_CURSOR - the value must be one of the following cursor modes:
     // GLFW_CURSOR_DISABLED - hides and grabs the cursor, providing virtual and unlimited cursor movement. This is useful for implementing for example 3D camera controls.
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+//    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // This function makes the OpenGL or OpenGL ES context of the specified window current on the calling thread.
     glfwMakeContextCurrent(window);

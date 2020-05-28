@@ -5,7 +5,7 @@
 
 DirectionalLight::DirectionalLight(GLfloat _width, GLfloat _height, const glm::vec3& _colour, GLfloat _aIntensity, GLfloat _dIntensity, const glm::vec3& _direction)
         : Light(_width, _height, _colour, _aIntensity, _dIntensity), direction(_direction) {
-    lightProj = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, 0.1f, 20.0f);
+    lightProj = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, 0.1f, 100.0f);
 }
 
 DirectionalLight::~DirectionalLight() = default;

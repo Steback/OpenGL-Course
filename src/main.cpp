@@ -25,7 +25,7 @@ std::unique_ptr<Window> window;
 std::vector<Mesh*> meshList;
 
 std::vector<Shader*> shaderList;
-std::unique_ptr<Shader> directionalShadowShader;
+Shader* directionalShadowShader;
 
 std::unique_ptr<Camera> camera;
 
@@ -49,6 +49,8 @@ std::unique_ptr<Model> blackhack;
 
 GLfloat deltaTime = 0.0f;
 GLfloat lastTime = 0.0f;
+
+GLfloat blackHawkAngle = 0.0f;
 
 GLuint uniformModel = 0, uniformProjection = 0, unifornmView = 0, uniformEyePosition = 0;
 GLuint uniformSpecularIntesity = 0, uniformShininess = 0;
@@ -125,7 +127,7 @@ void CreateShaders() {
     shader->CreateFormFiles( "Shaders/shader.vert", "Shaders/shader.frag");
     shaderList.push_back(shader);
 
-    directionalShadowShader = std::make_unique<Shader>();
+    directionalShadowShader = new Shader();
     directionalShadowShader->CreateFormFiles("Shaders/directionalShadowMap.vert", "Shaders/directionalShadowMap.frag");
 }
 
@@ -151,8 +153,14 @@ void RenderScene() {
     shinyMaterial->UseMateril(uniformSpecularIntesity, uniformShininess);
     xwing->RenderModel();
 
+    blackHawkAngle += 0.1f;
+
+    if ( blackHawkAngle > 360.f ) blackHawkAngle = 0.1f;
+
     model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 5.0f));
+    model = glm::rotate(model, -blackHawkAngle * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::translate(model, glm::vec3(-8.0f, 2.0f, 5.0f));
+    model = glm::rotate(model, -20.0f * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
     model = glm::rotate(model, -90.0f * toRadians, glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
     glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
@@ -163,14 +171,14 @@ void RenderScene() {
 void DirectionalShadowMapPass(DirectionalLight* _light) {
     directionalShadowShader->UseShader();
 
-    glViewport(0, 0, _light->GetShadowMap()->GetShadowHeight(), _light->GetShadowMap()->GetShadowHeight());
+    glViewport(0, 0, _light->GetShadowMap()->GetShadowWidth(), _light->GetShadowMap()->GetShadowHeight());
 
     _light->GetShadowMap()->Write();
     glClear(GL_DEPTH_BUFFER_BIT);
 
     uniformModel = directionalShadowShader->GetModelLocation();
-    ShadowMap::SetDirectionalLightTransform(_light->CalcLightTransform(),
-            directionalShadowShader->GetUniformLocation("directionalLightTransform"));
+
+    ShadowMap::SetDirectionalLightTransform(_light->CalcLightTransform(), directionalShadowShader);
 
     RenderScene();
 
@@ -190,7 +198,7 @@ void RenderPass(const glm::mat4& _projection, const glm::mat4 _viewMatrix) {
     glViewport(0, 0, 1366, 768);
 
     // glClearColor — specify clear values for the color buffers
-    glClearColor(0, 0, 0, 1);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     // GL_COLOR_BUFFER_BIT - Indicates the buffers currently enabled for color writing.
     // GL_DEPTH_BUFFER_BIT - Indicates the depth buffer.
@@ -203,14 +211,13 @@ void RenderPass(const glm::mat4& _projection, const glm::mat4 _viewMatrix) {
     DirectionalLight::SetDirectionalLight(*directionalLight, *uniformDirectionalLight);
     PointLight::SetPointLights(pointLights, uniformPointLight, shaderList[0]->GetUniformLocation("pointLightCount"));
     SpotLight::SetPointLights(spotLights, uniformSpotLight, shaderList[0]->GetUniformLocation("spotLightCount"));
-    ShadowMap::SetDirectionalLightTransform(directionalLight->CalcLightTransform(),
-            shaderList[0]->GetUniformLocation("directionalLightTransform"));
+    ShadowMap::SetDirectionalLightTransform(directionalLight->CalcLightTransform(),shaderList[0]);
 
     directionalLight->GetShadowMap()->Read(GL_TEXTURE1);
-    ShadowMap::SetTexture(0, shaderList[0]->GetUniformLocation("Texture"));
-    ShadowMap::SetDirectionalShadowMap(1, shaderList[0]->GetUniformLocation("directionalShadowMap"));
+    ShadowMap::SetTexture(0, shaderList[0]);
+    ShadowMap::SetDirectionalShadowMap(1, shaderList[0]);
 
-    //        spotLights[0].SetFlash(camera.getCameraPosition(), camera.getCameraDirection());
+//    spotLights[0].SetFlash(camera->getCameraPosition(), camera->getCameraDirection());
 
     RenderScene();
 }
@@ -239,8 +246,8 @@ int main() {
     blackhack = std::make_unique<Model>();
     blackhack->LoadModel("Models/uh60.obj");
 
-    directionalLight = new DirectionalLight(1024, 1024, glm::vec3(1.0f, 1.0f, 1.0f),
-            0.3f, 0.6f, glm::vec3(0.0f, 0.0f, -1.0f));
+    directionalLight = new DirectionalLight(2048, 2048, glm::vec3(1.0f, 1.0f, 1.0f),
+            0.3f, 0.3f, glm::vec3(0.0f, -15.0f, -10.0f));
 
     uniformDirectionalLight = new UniformDirectionalLight();
     DirectionalLight::GetUDirectionalLight(*shaderList[0], *uniformDirectionalLight);
