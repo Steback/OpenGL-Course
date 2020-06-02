@@ -2,7 +2,6 @@
 #define LIGHT_H
 
 #include <GL/glew.h>
-
 #include "glm/glm.hpp"
 
 class ShadowMap;

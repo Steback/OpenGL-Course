@@ -2,7 +2,6 @@
 #define OPENGL_EXAMPLES_SHADOWMAP_H
 
 #include "glm/glm.hpp"
-
 #include <GL/glew.h>
 
 class Shader;

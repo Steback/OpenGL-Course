@@ -25,11 +25,9 @@ class Shader {
         GLuint uniformProjection{};
         GLuint uniformModel{};
         GLuint uniformView{};
-        GLint result{};
-        GLchar eLog[1024]{};
 
         void CompileShader(std::string& _vertexCode, std::string& _fragmentCode);
-        void AddShader(GLuint _program, std::string& _shaderCode, GLenum _shaderType);
+        static void AddShader(GLuint _program, std::string& _shaderCode, GLenum _shaderType);
 };
 
 #endif

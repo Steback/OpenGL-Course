@@ -48,13 +48,13 @@ bool ShadowMap::Init(GLuint _width, GLuint _height) {
         return false;
     }
 
-//    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     return true;
 }
 
 void ShadowMap::Write() {
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 }
 
 void ShadowMap::Read(GLenum _textureUnit) {

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 project(opengl-examples)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 14)
 
 find_library(GLEW REQUIRED)
 find_library(glfw REQUIRED)

@@ -4,7 +4,7 @@
 
 Shader::Shader() = default;
 
-Shader::~Shader() { ClearShader(); };
+Shader::~Shader() { ClearShader(); }
 
 void Shader::CreateFormFiles(const std::string &_vertexFilePath, const std::string &_fragmentFilePath) {
     std::string vertexString = ReadFile(_vertexFilePath);
@@ -79,6 +79,9 @@ void Shader::CompileShader(std::string &_vertexCode, std::string &_fragmentCode)
     // they will be used to create an executable that will run on the programmable vertex processor.
     glLinkProgram(shaderID);
 
+    GLint result{};
+    GLchar eLog[1024]{};
+
     // glGetProgramiv returns in params the value of a parameter for a specific program object.
     // GL_LINK_STATUS - params returns GL_TRUE if the last link operation on program was successful, and GL_FALSE otherwise.
     glGetProgramiv(shaderID, GL_LINK_STATUS, &result);
@@ -124,6 +127,9 @@ void Shader::AddShader(GLuint _program, std::string& _shaderCode, GLenum _shader
 
     // glCompileShader compiles the source code strings that have been stored in the shader object specified by shader.
     glCompileShader(shader);
+
+    GLint result{};
+    GLchar eLog[1024]{};
 
     // glGetShaderiv — return a parameter from a shader object
     glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
