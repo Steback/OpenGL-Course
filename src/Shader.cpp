@@ -13,6 +13,14 @@ void Shader::CreateFormFiles(const std::string &_vertexFilePath, const std::stri
     CompileShader(vertexString, fragmentString);
 }
 
+void Shader::CreateFormFiles(const std::string &_vertexFilePath,  const std::string &_geometryFilePath, const std::string &_fragmentFilePath) {
+    std::string vertexString = ReadFile(_vertexFilePath);
+    std::string geometryString = ReadFile(_geometryFilePath);
+    std::string fragmentString = ReadFile(_fragmentFilePath);
+
+    CompileShader(vertexString, geometryString, fragmentString);
+}
+
 std::string Shader::ReadFile(const std::string &_filePath) {
     std::string content;
     std::fstream fileStream(_filePath, std::ios::in);
@@ -79,36 +87,24 @@ void Shader::CompileShader(std::string &_vertexCode, std::string &_fragmentCode)
     // they will be used to create an executable that will run on the programmable vertex processor.
     glLinkProgram(shaderID);
 
-    GLint result{};
-    GLchar eLog[1024]{};
+    CompileProgram();
+}
 
-    // glGetProgramiv returns in params the value of a parameter for a specific program object.
-    // GL_LINK_STATUS - params returns GL_TRUE if the last link operation on program was successful, and GL_FALSE otherwise.
-    glGetProgramiv(shaderID, GL_LINK_STATUS, &result);
+void Shader::CompileShader(std::string& _vertexCode, std::string& _geometryCode, std::string& _fragmentCode) {
+    shaderID = glCreateProgram();
 
-    if ( !result ) {
-        // glGetProgramInfoLog — return the information log for a program object
-        glGetProgramInfoLog(shaderID, sizeof(eLog), nullptr, eLog);
-        std::cerr << "Error linking program: " << eLog << std::endl;
+    if ( !shaderID ) {
+        std::cerr << "Error creating shader program" << std::endl;
         return ;
     }
 
-    // glValidateProgram checks to see whether the executables contained in program can execute given the current OpenGL state.
-    glValidateProgram(shaderID);
+    AddShader(shaderID, _vertexCode, GL_VERTEX_SHADER);
+    AddShader(shaderID, _geometryCode, GL_GEOMETRY_SHADER);
+    AddShader(shaderID, _fragmentCode, GL_FRAGMENT_SHADER);
 
-    // GL_VALIDATE_STATUS - params returns GL_TRUE or if the last validation operation on program was successful, and GL_FALSE otherwise.
-    glGetProgramiv(shaderID, GL_VALIDATE_STATUS, &result);
+    glLinkProgram(shaderID);
 
-    if ( !result ) {
-        glGetProgramInfoLog(shaderID, sizeof(eLog), nullptr, eLog);
-        std::cerr << "Error validating program: " << eLog << std::endl;
-        return ;
-    }
-
-    // glGetUniformLocation returns an integer that represents the location of a specific uniform variable within a program object.
-    uniformModel = glGetUniformLocation(shaderID, "model");
-    uniformProjection = glGetUniformLocation(shaderID, "projection");
-    uniformView = glGetUniformLocation(shaderID, "view");
+    CompileProgram();
 }
 
 void Shader::AddShader(GLuint _program, std::string& _shaderCode, GLenum _shaderType) {
@@ -143,4 +139,37 @@ void Shader::AddShader(GLuint _program, std::string& _shaderCode, GLenum _shader
 
     // glAttachShader — Attaches a shader object to a program object
     glAttachShader(_program, shader);
+}
+
+void Shader::CompileProgram() {
+    GLint result{};
+    GLchar eLog[1024]{};
+
+    // glGetProgramiv returns in params the value of a parameter for a specific program object.
+    // GL_LINK_STATUS - params returns GL_TRUE if the last link operation on program was successful, and GL_FALSE otherwise.
+    glGetProgramiv(shaderID, GL_LINK_STATUS, &result);
+
+    if ( !result ) {
+        // glGetProgramInfoLog — return the information log for a program object
+        glGetProgramInfoLog(shaderID, sizeof(eLog), nullptr, eLog);
+        std::cerr << "Error linking program: " << eLog << std::endl;
+        return ;
+    }
+
+    // glValidateProgram checks to see whether the executables contained in program can execute given the current OpenGL state.
+    glValidateProgram(shaderID);
+
+    // GL_VALIDATE_STATUS - params returns GL_TRUE or if the last validation operation on program was successful, and GL_FALSE otherwise.
+    glGetProgramiv(shaderID, GL_VALIDATE_STATUS, &result);
+
+    if ( !result ) {
+        glGetProgramInfoLog(shaderID, sizeof(eLog), nullptr, eLog);
+        std::cerr << "Error validating program: " << eLog << std::endl;
+        return ;
+    }
+
+    // glGetUniformLocation returns an integer that represents the location of a specific uniform variable within a program object.
+    uniformModel = glGetUniformLocation(shaderID, "model");
+    uniformProjection = glGetUniformLocation(shaderID, "projection");
+    uniformView = glGetUniformLocation(shaderID, "view");
 }

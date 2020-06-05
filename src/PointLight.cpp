@@ -1,10 +1,21 @@
 #include <cstdio>
+#include <memory>
+
+#include "glm/gtc/matrix_transform.hpp"
 
 #include "PointLight.h"
 #include "Shader.h"
+#include "OmniShadowMap.h"
 
-PointLight::PointLight(const glm::vec3& _colour, GLfloat _aIntensity, GLfloat _dIntensity, const glm::vec3& _position, GLfloat con, GLfloat lin, GLfloat exp)
-        : Light(1024, 1024, _colour, _aIntensity, _dIntensity), position(_position), constant(con), linear(lin), exponent(exp) {  }
+PointLight::PointLight(const glm::vec2& _shadowSize, const glm::vec2& _planes, const glm::vec3& _colour, GLfloat _aIntensity,
+        GLfloat _dIntensity, const glm::vec3& _position, GLfloat con, GLfloat lin, GLfloat exp)
+        : Light(_shadowSize.x, _shadowSize.y, _colour, _aIntensity, _dIntensity), position(_position), constant(con),
+        linear(lin), exponent(exp), farPlane(_planes.x) {
+    lightProj = glm::perspective(glm::radians(90.0f), _shadowSize.x / _shadowSize.y, _planes.y, farPlane );
+
+    shadowMap = std::make_shared<OmniShadowMap>();
+    shadowMap->Init(_shadowSize.x, _shadowSize.y);
+}
 
 PointLight::~PointLight() = default;
 
@@ -56,4 +67,21 @@ void PointLight::SetPointLights(std::vector<PointLight> &_pLight, const std::vec
                             _uPointLight[i].uniformDiffuseIntensity, _uPointLight[i].uniformPosition,
                             _uPointLight[i].uniformConstant, _uPointLight[i].uniformLinear, _uPointLight[i].uniformExponent);
     }
+}
+
+std::vector<glm::mat4> PointLight::CalcLightTransform() {
+    return std::vector<glm::mat4> {
+            lightProj * glm::lookAt(position, position + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)), // X
+            lightProj * glm::lookAt(position, position + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)), // -X
+            lightProj * glm::lookAt(position, position + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)), // Y
+            lightProj * glm::lookAt(position, position + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)), // -Y
+            lightProj * glm::lookAt(position, position + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)), // Z
+            lightProj * glm::lookAt(position, position + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f)), // -Z
+    };
+}
+
+GLfloat PointLight::GetFarPlane() const { return farPlane; }
+
+glm::vec3 PointLight::GetPosition() const {
+    return position;
 }

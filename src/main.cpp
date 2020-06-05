@@ -17,6 +17,7 @@
 #include "Texture.h"
 #include "Model.h"
 #include "ShadowMap.h"
+#include "OmniShadowMap.h"
 
 const float toRadians = 3.14159265f / 180.0f;
 
@@ -26,6 +27,7 @@ std::vector<Mesh*> meshList;
 
 std::vector<Shader*> shaderList;
 Shader* directionalShadowShader;
+Shader* omniShadowShader;
 
 std::unique_ptr<Camera> camera;
 
@@ -129,6 +131,9 @@ void CreateShaders() {
 
     directionalShadowShader = new Shader();
     directionalShadowShader->CreateFormFiles("Shaders/directionalShadowMap.vert", "Shaders/directionalShadowMap.frag");
+
+    omniShadowShader = new Shader();
+    omniShadowShader->CreateFormFiles("Shaders/omniShadowMap.vert", "Shaders/omniShadowMap.geom", "Shaders/omniShadowMap.frag");
 }
 
 void RenderScene() {
@@ -179,6 +184,25 @@ void DirectionalShadowMapPass(DirectionalLight* _light) {
     uniformModel = directionalShadowShader->GetModelLocation();
 
     ShadowMap::SetDirectionalLightTransform(_light->CalcLightTransform(), directionalShadowShader);
+
+    RenderScene();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void OmniShadowMapPass(PointLight* _light) {
+    omniShadowShader->UseShader();
+
+    glViewport(0, 0, _light->GetShadowMap()->GetShadowWidth(), _light->GetShadowMap()->GetShadowHeight());
+
+    _light->GetShadowMap()->Write();
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    uniformModel = omniShadowShader->GetModelLocation();
+
+    glUniform3f(omniShadowShader->GetUniformLocation("lightPos"), _light->GetPosition().x, _light->GetPosition().y, _light->GetPosition().z);
+    glUniform1f(omniShadowShader->GetUniformLocation("farPlane"), _light->GetFarPlane());
+    OmniShadowMap::SetLightMatrices(omniShadowShader, _light->CalcLightTransform());
 
     RenderScene();
 
@@ -253,9 +277,9 @@ int main() {
     DirectionalLight::GetUDirectionalLight(*shaderList[0], *uniformDirectionalLight);
 
     pointLights = {
-            { glm::vec3(0.0f, 0.0f, 1.0f), 0.0f, 0.1f,
+            { glm::vec2(1024, 1024), glm::vec2(0.1f, 100.0f), glm::vec3(0.0f, 0.0f, 1.0f), 0.0f, 0.1f,
               glm::vec3(0.0f, 0.0f, 0.0f), 0.3f, 0.2f, 0.1f },
-            { glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.1f,
+            { glm::vec2(1024, 1024), glm::vec2(0.1f, 100.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.1f,
               glm::vec3(-4.0f, 2.0f, 0.0f), 0.3f, 0.1f, 0.1f }
     };
 
@@ -263,17 +287,17 @@ int main() {
     PointLight::GetUPointLight(*shaderList[0], uniformPointLight);
 
     spotLights = {
-            { glm::vec3(1.0f, 1.0f, 1.0f), 0.0f, 2.0f, glm::vec3(0.0f, 0.0f, 0.0f),
-              1.0f, 0.0f, 0.0f, glm::vec3(0.0f, -1.0f, 0.0f), 20.0f },
-            { glm::vec3(1.0f, 1.0f, 1.0f), 0.0f, 1.0f, glm::vec3(0.0f, -1.5f, 0.0f),
-              1.0f, 0.0f, 0.0f, glm::vec3(-100.0f, -1.0f, 0.0f), 20.0f }
+            { glm::vec2(1024, 1024), glm::vec2(0.1f, 100.0f), glm::vec3(1.0f, 1.0f, 1.0f), 0.0f,
+              2.0f, glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, 0.0f, 0.0f, glm::vec3(0.0f, -1.0f, 0.0f), 20.0f },
+            { glm::vec2(1024, 1024), glm::vec2(0.1f, 100.0f), glm::vec3(1.0f, 1.0f, 1.0f),0.0f,
+              1.0f, glm::vec3(0.0f, -1.5f, 0.0f), 1.0f, 0.0f, 0.0f, glm::vec3(-100.0f, -1.0f, 0.0f), 20.0f }
     };
 
     uniformSpotLight = std::vector<UniformSpotLight>(MAX_POINT_LIGHTS);
     SpotLight::GetUPointLight(*shaderList[0], uniformSpotLight);
 
-    glm::mat4 projection = glm::perspective(45.0f, static_cast<GLfloat>(window->GetBufferWidth()) / static_cast<GLfloat>(window->GetBufferHeight()),
-            0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(60.0f),
+            static_cast<GLfloat>(window->GetBufferWidth()) / static_cast<GLfloat>(window->GetBufferHeight()),0.1f, 100.0f);
 
     // Loop until window closed
     while ( window->getShouldClose() ) {
@@ -291,6 +315,15 @@ int main() {
         camera->MouseControl(window->getXChange(), window->getYChange());
 
         DirectionalShadowMapPass(directionalLight);
+
+        for ( auto& pointLight : pointLights ) {
+            OmniShadowMapPass(&pointLight);
+        }
+
+        for ( auto& spotLight : spotLights ) {
+            OmniShadowMapPass(&spotLight);
+        }
+
         RenderPass(projection, camera->calculateViewMatrix());
 
         // glUseProgram — Installs a program object as part of current rendering state

@@ -3,9 +3,9 @@
 #include "SpotLight.h"
 #include "Shader.h"
 
-SpotLight::SpotLight(const glm::vec3& _colour, GLfloat _aIntensity, GLfloat _dIntensity, const glm::vec3& _position, GLfloat _con, GLfloat _lin, GLfloat _exp,
-                     const glm::vec3& _direction, GLfloat _edge)
-        : PointLight(_colour, _aIntensity, _dIntensity, _position, _con, _lin, _exp), direction(glm::normalize(_direction)),
+SpotLight::SpotLight(const glm::vec2& _shadowSize, const glm::vec2& _planes, const glm::vec3& _colour, GLfloat _aIntensity,
+        GLfloat _dIntensity, const glm::vec3& _position, GLfloat _con, GLfloat _lin, GLfloat _exp, const glm::vec3& _direction, GLfloat _edge)
+        : PointLight(_shadowSize, _planes, _colour, _aIntensity, _dIntensity, _position, _con, _lin, _exp), direction(glm::normalize(_direction)),
           edge(_edge), procEdge(cosf(glm::radians(_edge))) {  }
 
 SpotLight::~SpotLight() = default;
