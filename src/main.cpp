@@ -46,6 +46,8 @@ std::vector<UniformPointLight> uniformPointLight;
 std::vector<SpotLight> spotLights;
 std::vector<UniformSpotLight> uniformSpotLight;
 
+std::vector<UniformOmniShadowMap> uniformOmniShadowMap;
+
 std::unique_ptr<Model> xwing;
 std::unique_ptr<Model> blackhack;
 
@@ -152,7 +154,7 @@ void RenderScene() {
     meshList[1]->RenderMesh();
 
     model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(-12.0f, 0.0f, 12.0f));
+    model = glm::translate(model, glm::vec3(-10.0f, 0.0f, 15.0f));
     model = glm::scale(model, glm::vec3(0.01f, 0.01f, 0.01f));
     glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
     shinyMaterial->UseMateril(uniformSpecularIntesity, uniformShininess);
@@ -185,6 +187,8 @@ void DirectionalShadowMapPass(DirectionalLight* _light) {
 
     ShadowMap::SetDirectionalLightTransform(_light->CalcLightTransform(), directionalShadowShader);
 
+    directionalShadowShader->Validate();
+
     RenderScene();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -203,6 +207,8 @@ void OmniShadowMapPass(PointLight* _light) {
     glUniform3f(omniShadowShader->GetUniformLocation("lightPos"), _light->GetPosition().x, _light->GetPosition().y, _light->GetPosition().z);
     glUniform1f(omniShadowShader->GetUniformLocation("farPlane"), _light->GetFarPlane());
     OmniShadowMap::SetLightMatrices(omniShadowShader, _light->CalcLightTransform());
+
+    omniShadowShader->Validate();
 
     RenderScene();
 
@@ -233,15 +239,24 @@ void RenderPass(const glm::mat4& _projection, const glm::mat4 _viewMatrix) {
     glUniform3f(uniformEyePosition, camera->getCameraPosition().x, camera->getCameraPosition().y, camera->getCameraPosition().z);
 
     DirectionalLight::SetDirectionalLight(*directionalLight, *uniformDirectionalLight);
-    PointLight::SetPointLights(pointLights, uniformPointLight, shaderList[0]->GetUniformLocation("pointLightCount"));
-    SpotLight::SetPointLights(spotLights, uniformSpotLight, shaderList[0]->GetUniformLocation("spotLightCount"));
+
+    PointLight::SetPointLights(pointLights, uniformPointLight, shaderList[0]->GetUniformLocation("pointLightCount"),
+            3, 0, uniformOmniShadowMap);
+
+    SpotLight::SetPointLights(spotLights, uniformSpotLight, shaderList[0]->GetUniformLocation("spotLightCount"),
+            3 + pointLights.size(), pointLights.size(), uniformOmniShadowMap);
+
     ShadowMap::SetDirectionalLightTransform(directionalLight->CalcLightTransform(),shaderList[0]);
 
-    directionalLight->GetShadowMap()->Read(GL_TEXTURE1);
-    ShadowMap::SetTexture(0, shaderList[0]);
-    ShadowMap::SetDirectionalShadowMap(1, shaderList[0]);
+    directionalLight->GetShadowMap()->Read(GL_TEXTURE2);
+    ShadowMap::SetTexture(1, shaderList[0]);
+    ShadowMap::SetDirectionalShadowMap(2, shaderList[0]);
 
-//    spotLights[0].SetFlash(camera->getCameraPosition(), camera->getCameraDirection());
+    glm::vec3 lowerLight = camera->getCameraPosition();
+    lowerLight.y -= 0.3f;
+    spotLights[0].SetFlash(lowerLight, camera->getCameraDirection());
+
+    shaderList[0]->Validate();
 
     RenderScene();
 }
@@ -271,16 +286,16 @@ int main() {
     blackhack->LoadModel("Models/uh60.obj");
 
     directionalLight = new DirectionalLight(2048, 2048, glm::vec3(1.0f, 1.0f, 1.0f),
-            0.3f, 0.3f, glm::vec3(0.0f, -15.0f, -10.0f));
+            0.0f, 0.1f, glm::vec3(0.0f, -15.0f, -10.0f));
 
     uniformDirectionalLight = new UniformDirectionalLight();
     DirectionalLight::GetUDirectionalLight(*shaderList[0], *uniformDirectionalLight);
 
     pointLights = {
-            { glm::vec2(1024, 1024), glm::vec2(0.1f, 100.0f), glm::vec3(0.0f, 0.0f, 1.0f), 0.0f, 0.1f,
-              glm::vec3(0.0f, 0.0f, 0.0f), 0.3f, 0.2f, 0.1f },
-            { glm::vec2(1024, 1024), glm::vec2(0.1f, 100.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 0.1f,
-              glm::vec3(-4.0f, 2.0f, 0.0f), 0.3f, 0.1f, 0.1f }
+            { glm::vec2(1024, 1024), glm::vec2(0.1f, 100.0f), glm::vec3(0.0f, 0.0f, 1.0f), 0.0f, 1.0f,
+              glm::vec3(5.0f, 2.0f, 0.0f), 0.3f, 0.1f, 0.1f },
+            { glm::vec2(1024, 1024), glm::vec2(0.1f, 100.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, 1.0f,
+              glm::vec3(-4.0f, 3.0f, 0.0f), 0.3f, 0.1f, 0.1f }
     };
 
     uniformPointLight = std::vector<UniformPointLight>(MAX_POINT_LIGHTS);
@@ -295,6 +310,9 @@ int main() {
 
     uniformSpotLight = std::vector<UniformSpotLight>(MAX_POINT_LIGHTS);
     SpotLight::GetUPointLight(*shaderList[0], uniformSpotLight);
+
+    uniformOmniShadowMap = std::vector<UniformOmniShadowMap>(MAX_POINT_LIGHTS + MAX_SPOT_LIGHTS);
+    OmniShadowMap::GetUniformsOmniShadowMap(uniformOmniShadowMap, shaderList[0]);
 
     glm::mat4 projection = glm::perspective(glm::radians(60.0f),
             static_cast<GLfloat>(window->GetBufferWidth()) / static_cast<GLfloat>(window->GetBufferHeight()),0.1f, 100.0f);
@@ -313,6 +331,11 @@ int main() {
 
         camera->KeyControl(window->getKeys(), deltaTime);
         camera->MouseControl(window->getXChange(), window->getYChange());
+
+        if ( window->getKeys()[GLFW_KEY_L] ) {
+            spotLights[0].Toggle();
+            window->getKeys()[GLFW_KEY_L] = false;
+        }
 
         DirectionalShadowMapPass(directionalLight);
 

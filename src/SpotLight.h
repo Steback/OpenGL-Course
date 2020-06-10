@@ -17,6 +17,8 @@ struct UniformSpotLight {
     GLuint uniformEdge;
 };
 
+struct UniformOmniShadowMap;
+
 class SpotLight : public PointLight {
     public:
         SpotLight(const glm::vec2& _shadowSize, const glm::vec2& _planes, const glm::vec3& _colour, GLfloat _aIntensity,
@@ -31,13 +33,17 @@ class SpotLight : public PointLight {
 
         static void GetUPointLight(const Shader& _shader, std::vector<UniformSpotLight>& _uSpotLight);
 
-        static void SetPointLights(std::vector<SpotLight> &_sLight, const std::vector<UniformSpotLight> &_uSpotLight, GLuint _uSpotLightCount);
+        static void SetPointLights(std::vector<SpotLight> &_sLight, const std::vector<UniformSpotLight> &_uSpotLight,
+                GLuint _uSpotLightCount, unsigned int _texUnit, unsigned int _offSet, const std::vector<UniformOmniShadowMap>& _uOmniShadowMap);
 
         void SetFlash(glm::vec3 _pos, glm::vec3 _dir);
+
+        void Toggle();
 
     private:
         glm::vec3 direction;
         GLfloat edge{}, procEdge{};
+        bool isOn;
 };
 
 #endif

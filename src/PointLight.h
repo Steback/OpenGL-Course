@@ -18,6 +18,8 @@ struct UniformPointLight {
     GLuint uniformExponent{};
 };
 
+struct UniformOmniShadowMap;
+
 class PointLight : public Light  {
     public:
         PointLight(const glm::vec2& _shadowSize, const glm::vec2& _planes, const glm::vec3& _colour, GLfloat _aIntensity,
@@ -31,7 +33,7 @@ class PointLight : public Light  {
         static void GetUPointLight(const Shader& _shader, std::vector<UniformPointLight>& _uPointLight);
 
         static void SetPointLights(std::vector<PointLight>& _pLight, const std::vector<UniformPointLight>& _uPointLight,
-                GLuint _uPointLightCount);
+                GLuint _uPointLightCount, unsigned int _texUnit, unsigned int _offSet, const std::vector<UniformOmniShadowMap>& _uOmniShadowMap);
 
         std::vector<glm::mat4> CalcLightTransform();
 

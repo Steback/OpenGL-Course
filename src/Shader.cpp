@@ -67,6 +67,23 @@ void Shader::ClearShader() {
     uniformProjection = 0;
 }
 
+void Shader::Validate() const {
+    GLint result{};
+    GLchar eLog[1024]{};
+
+    // glValidateProgram checks to see whether the executables contained in program can execute given the current OpenGL state.
+    glValidateProgram(shaderID);
+
+    // GL_VALIDATE_STATUS - params returns GL_TRUE or if the last validation operation on program was successful, and GL_FALSE otherwise.
+    glGetProgramiv(shaderID, GL_VALIDATE_STATUS, &result);
+
+    if ( !result ) {
+        glGetProgramInfoLog(shaderID, sizeof(eLog), nullptr, eLog);
+        std::cerr << "Error validating program: " << eLog << std::endl;
+        return ;
+    }
+}
+
 void Shader::CompileShader(std::string &_vertexCode, std::string &_fragmentCode) {
     // glCreateProgram creates an empty program object and returns a non-zero value by which it can be referenced.
     // A program object is an object to which shader objects can be attached. This provides a mechanism to specify the shader objects that will be linked to create a program.
@@ -153,18 +170,6 @@ void Shader::CompileProgram() {
         // glGetProgramInfoLog — return the information log for a program object
         glGetProgramInfoLog(shaderID, sizeof(eLog), nullptr, eLog);
         std::cerr << "Error linking program: " << eLog << std::endl;
-        return ;
-    }
-
-    // glValidateProgram checks to see whether the executables contained in program can execute given the current OpenGL state.
-    glValidateProgram(shaderID);
-
-    // GL_VALIDATE_STATUS - params returns GL_TRUE or if the last validation operation on program was successful, and GL_FALSE otherwise.
-    glGetProgramiv(shaderID, GL_VALIDATE_STATUS, &result);
-
-    if ( !result ) {
-        glGetProgramInfoLog(shaderID, sizeof(eLog), nullptr, eLog);
-        std::cerr << "Error validating program: " << eLog << std::endl;
         return ;
     }
 

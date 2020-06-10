@@ -20,6 +20,7 @@ class Shader {
         GLuint GetViewLocation() const;
         void UseShader() const;
         void ClearShader();
+        void Validate() const;
 
     private:
         GLuint shaderID{};

@@ -84,7 +84,7 @@ bool Texture::LoadTextureA() {
 
 void Texture::UseTexture() const {
     // glActiveTexture selects which texture unit subsequent texture state calls will affect.
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, textureID);
 }
 

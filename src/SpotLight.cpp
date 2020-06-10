@@ -2,19 +2,26 @@
 
 #include "SpotLight.h"
 #include "Shader.h"
+#include "OmniShadowMap.h"
 
 SpotLight::SpotLight(const glm::vec2& _shadowSize, const glm::vec2& _planes, const glm::vec3& _colour, GLfloat _aIntensity,
         GLfloat _dIntensity, const glm::vec3& _position, GLfloat _con, GLfloat _lin, GLfloat _exp, const glm::vec3& _direction, GLfloat _edge)
         : PointLight(_shadowSize, _planes, _colour, _aIntensity, _dIntensity, _position, _con, _lin, _exp), direction(glm::normalize(_direction)),
-          edge(_edge), procEdge(cosf(glm::radians(_edge))) {  }
+          edge(_edge), procEdge(cosf(glm::radians(_edge))), isOn(true) {  }
 
 SpotLight::~SpotLight() = default;
 
 void SpotLight::UseLight(GLuint _ambientIntensityLocation, GLuint _ambienColourLocation, GLuint _diffuseIntensityLocation, GLuint _positionLocation,
         GLuint _directionLocationGLuint, GLuint _constantLocation, GLuint _linearLocation, GLuint _exponentLocation, GLuint _edgeLocation) const {
     glUniform3f(_ambienColourLocation, colour.x, colour.y, colour.z);
-    glUniform1f(_ambientIntensityLocation, ambientIntensity);
-    glUniform1f(_diffuseIntensityLocation, diffuseIntensity);
+
+    if ( isOn ) {
+        glUniform1f(_ambientIntensityLocation, ambientIntensity);
+        glUniform1f(_diffuseIntensityLocation, diffuseIntensity);
+    } else {
+        glUniform1f(_ambientIntensityLocation, 0.0f);
+        glUniform1f(_diffuseIntensityLocation, 0.0f);
+    }
 
     glUniform3f(_positionLocation, position.x, position.y, position.z);
     glUniform1f(_constantLocation, constant);
@@ -58,7 +65,8 @@ void SpotLight::GetUPointLight(const Shader &_shader, std::vector<UniformSpotLig
     }
 }
 
-void SpotLight::SetPointLights(std::vector<SpotLight> &_sLight, const std::vector<UniformSpotLight> &_uSpotLight, GLuint _uSpotLightCount) {
+void SpotLight::SetPointLights(std::vector<SpotLight> &_sLight, const std::vector<UniformSpotLight> &_uSpotLight,
+        GLuint _uSpotLightCount, unsigned int _texUnit, unsigned int _offSet, const std::vector<UniformOmniShadowMap>& _uOmniShadowMap) {
     glUniform1i(_uSpotLightCount, _sLight.size());
 
     for ( size_t i = 0; i < _sLight.size(); i++ ) {
@@ -66,6 +74,10 @@ void SpotLight::SetPointLights(std::vector<SpotLight> &_sLight, const std::vecto
                             _uSpotLight[i].uniformDiffuseIntensity, _uSpotLight[i].uniformPosition, _uSpotLight[i].uniformDirection,
                             _uSpotLight[i].uniformConstant, _uSpotLight[i].uniformLinear, _uSpotLight[i].uniformExponent,
                             _uSpotLight[i].uniformEdge);
+
+        _sLight[i].GetShadowMap()->Read(GL_TEXTURE0 + _texUnit + i);
+        glUniform1i(_uOmniShadowMap[i + _offSet].shadowMap, _texUnit + i);
+        glUniform1f(_uOmniShadowMap[i + _offSet].farPlane, _sLight[i].GetFarPlane());
     }
 }
 
@@ -73,3 +85,5 @@ void SpotLight::SetFlash(glm::vec3 _pos, glm::vec3 _dir) {
     position = _pos;
     direction = _dir;
 }
+
+void SpotLight::Toggle() { isOn = !isOn; }

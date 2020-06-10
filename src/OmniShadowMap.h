@@ -7,6 +7,11 @@
 
 class shader;
 
+struct UniformOmniShadowMap {
+    GLuint shadowMap;
+    float farPlane;
+};
+
 class OmniShadowMap : public ShadowMap {
     public:
         OmniShadowMap();
@@ -15,6 +20,7 @@ class OmniShadowMap : public ShadowMap {
         void Write() override;
         void Read(GLenum _textureUnit) override;
         static void SetLightMatrices(Shader* _shader, const std::vector<glm::mat4>& _matrices);
+        static void GetUniformsOmniShadowMap(std::vector<UniformOmniShadowMap>& _uOmniShadowMap, Shader* _shader);
 
     private:
 
