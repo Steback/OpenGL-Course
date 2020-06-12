@@ -18,6 +18,7 @@
 #include "Model.h"
 #include "ShadowMap.h"
 #include "OmniShadowMap.h"
+#include "SkyBox.h"
 
 const float toRadians = 3.14159265f / 180.0f;
 
@@ -50,6 +51,8 @@ std::vector<UniformOmniShadowMap> uniformOmniShadowMap;
 
 std::unique_ptr<Model> xwing;
 std::unique_ptr<Model> blackhack;
+
+std::unique_ptr<SkyBox> skyBox;
 
 GLfloat deltaTime = 0.0f;
 GLfloat lastTime = 0.0f;
@@ -216,15 +219,6 @@ void OmniShadowMapPass(PointLight* _light) {
 }
 
 void RenderPass(const glm::mat4& _projection, const glm::mat4 _viewMatrix) {
-    shaderList[0]->UseShader();
-
-    uniformModel = shaderList[0]->GetModelLocation();
-    uniformProjection = shaderList[0]->GetProjectionLocation();
-    unifornmView = shaderList[0]->GetViewLocation();
-    uniformEyePosition = shaderList[0]->GetUniformLocation("eyePosition");
-    uniformSpecularIntesity = shaderList[0]->GetUniformLocation("material.specularIntensity");
-    uniformShininess = shaderList[0]->GetUniformLocation("material.shininess");
-
     glViewport(0, 0, 1366, 768);
 
     // glClearColor — specify clear values for the color buffers
@@ -234,14 +228,25 @@ void RenderPass(const glm::mat4& _projection, const glm::mat4 _viewMatrix) {
     // GL_DEPTH_BUFFER_BIT - Indicates the depth buffer.
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    skyBox->DrawSkyBox(_viewMatrix, _projection);
+
+    shaderList[0]->UseShader();
+
+    uniformModel = shaderList[0]->GetModelLocation();
+    uniformProjection = shaderList[0]->GetProjectionLocation();
+    unifornmView = shaderList[0]->GetViewLocation();
+    uniformEyePosition = shaderList[0]->GetUniformLocation("eyePosition");
+    uniformSpecularIntesity = shaderList[0]->GetUniformLocation("material.specularIntensity");
+    uniformShininess = shaderList[0]->GetUniformLocation("material.shininess");
+
     glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(_projection));
     glUniformMatrix4fv(unifornmView, 1, GL_FALSE, glm::value_ptr(_viewMatrix));
     glUniform3f(uniformEyePosition, camera->getCameraPosition().x, camera->getCameraPosition().y, camera->getCameraPosition().z);
 
     DirectionalLight::SetDirectionalLight(*directionalLight, *uniformDirectionalLight);
 
-    PointLight::SetPointLights(pointLights, uniformPointLight, shaderList[0]->GetUniformLocation("pointLightCount"),
-            3, 0, uniformOmniShadowMap);
+//    PointLight::SetPointLights(pointLights, uniformPointLight, shaderList[0]->GetUniformLocation("pointLightCount"),
+//            3, 0, uniformOmniShadowMap);
 
     SpotLight::SetPointLights(spotLights, uniformSpotLight, shaderList[0]->GetUniformLocation("spotLightCount"),
             3 + pointLights.size(), pointLights.size(), uniformOmniShadowMap);
@@ -285,8 +290,8 @@ int main() {
     blackhack = std::make_unique<Model>();
     blackhack->LoadModel("Models/uh60.obj");
 
-    directionalLight = new DirectionalLight(2048, 2048, glm::vec3(1.0f, 1.0f, 1.0f),
-            0.0f, 0.1f, glm::vec3(0.0f, -15.0f, -10.0f));
+    directionalLight = new DirectionalLight(2048, 2048, glm::vec3(1.0f, 0.53f, 0.3f),
+            0.1f, 0.9f, glm::vec3(-10.0f, -12.0f, 18.5f));
 
     uniformDirectionalLight = new UniformDirectionalLight();
     DirectionalLight::GetUDirectionalLight(*shaderList[0], *uniformDirectionalLight);
@@ -313,6 +318,15 @@ int main() {
 
     uniformOmniShadowMap = std::vector<UniformOmniShadowMap>(MAX_POINT_LIGHTS + MAX_SPOT_LIGHTS);
     OmniShadowMap::GetUniformsOmniShadowMap(uniformOmniShadowMap, shaderList[0]);
+
+    skyBox = std::make_unique<SkyBox>( std::vector<std::string> {
+        "Textures/Skybox/cupertin-lake_rt.tga",
+        "Textures/Skybox/cupertin-lake_lf.tga",
+        "Textures/Skybox/cupertin-lake_up.tga",
+        "Textures/Skybox/cupertin-lake_dn.tga",
+        "Textures/Skybox/cupertin-lake_bk.tga",
+        "Textures/Skybox/cupertin-lake_ft.tga",
+    } );
 
     glm::mat4 projection = glm::perspective(glm::radians(60.0f),
             static_cast<GLfloat>(window->GetBufferWidth()) / static_cast<GLfloat>(window->GetBufferHeight()),0.1f, 100.0f);
